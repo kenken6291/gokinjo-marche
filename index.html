@@ -311,7 +311,7 @@ tailwind.config = {
     </div>
     <div id="pickSearch" class="flex gap-2">
       <label class="sr-only" for="pickQ">住所・場所の名前</label>
-      <input id="pickQ" class="field" placeholder="住所・場所の名前（例：中原区役所）">
+      <input id="pickQ" class="field" placeholder="住所・場所の名前・Googleマップのリンク">
       <button type="button" id="pickGo" class="btn btn-sub shrink-0">探す</button>
     </div>
     <p class="text-[15px]">地図をタップするか、ピンを動かして場所を決めてください。</p>
@@ -1041,6 +1041,7 @@ function locationSection(it, isEvent) {
     <div class="flex gap-2 flex-wrap">
       <a class="btn btn-sub !min-h-[48px]" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1${origin}&destination=${dest}&travelmode=walking">🚶 歩いて行く道順</a>
       <a class="btn btn-sub !min-h-[48px]" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1${origin}&destination=${dest}&travelmode=driving">🚗 車の道順</a>
+      ${it.mapUrl ? `<a class="btn btn-sub !min-h-[48px]" target="_blank" rel="noopener noreferrer" href="${esc(it.mapUrl)}">📍 Googleマップで見る</a>` : ''}
     </div>
   </section>`;
 }
@@ -1304,9 +1305,16 @@ function openForm(item) {
       </div>` : `
       <div><label class="label" for="fPlace">受け渡しの目安の場所（任意）</label><input id="fPlace" class="field" maxlength="100" value="${esc(it.place || '')}" placeholder="例：小杉町公民館の前">
         <p class="text-[14px] mt-1">空欄なら登録した地域が目安になります。地図には約100mぼかして表示します。</p></div>`}
+    <div><label class="label" for="fMapUrl">🔗 Googleマップのリンクで指定（任意）</label>
+      <div class="flex gap-2">
+        <input id="fMapUrl" class="field" type="url" inputmode="url" value="${esc(it.mapUrl || '')}" placeholder="https://maps.app.goo.gl/...">
+        <button type="button" class="copy-btn shrink-0" id="fMapPaste">📋<br>貼付</button>
+      </div>
+      <p class="text-[14px] mt-1">Googleマップで場所を開き「共有」→「リンクをコピー」して貼り付けると、その場所になります。</p>
+    </div>
     <div class="flex items-center gap-3 flex-wrap">
       <button type="button" id="fLocBtn" class="btn btn-sub">🗺 地図で場所を確かめる</button>
-      <span id="fLocState" class="text-[15px]"></span>
+      <span id="fLocState" class="text-[15px]" aria-live="polite"></span>
     </div>
     <div><label class="label" for="fArea">地域</label><input id="fArea" class="field" maxlength="50" value="${esc(it.area || S.user.area)}"></div>
     <div><label class="label" for="fDetail">${isEvent ? '案内文' : 'くわしく'}</label>
@@ -1334,14 +1342,41 @@ function openForm(item) {
   `;
 
   // 場所
-  const setLocState = () => {
-    $('#fLocState').textContent = f.dataset.lat
-      ? '✅ 地図で場所を決めました'
-      : (editing && hasLoc(it) ? '📍 登録済みの場所を使います' : '保存するときに住所から自動で探します');
+  const setLocState = (msg) => {
+    $('#fLocState').textContent = msg || (f.dataset.lat
+      ? (f.dataset.locSrc === 'url' ? '✅ Googleマップの場所を使います' : '✅ 地図で場所を決めました')
+      : (editing && hasLoc(it) ? '📍 登録済みの場所を使います' : '保存するときに住所から自動で探します'));
   };
-  f.dataset.lat = ''; f.dataset.lng = '';
+  const clearLoc = () => { f.dataset.lat = ''; f.dataset.lng = ''; f.dataset.locSrc = ''; };
+  clearLoc();
   setLocState();
-  $('#fPlace').addEventListener('input', () => { f.dataset.lat = ''; f.dataset.lng = ''; setLocState(); });
+  const isMapLink = v => /^https:\/\/(maps\.app\.goo\.gl|goo\.gl\/maps|(www\.)?google\.[a-z.]+\/maps|maps\.google\.)/i.test(v.trim());
+  const resolveMapLink = async () => {
+    const url = $('#fMapUrl').value.trim();
+    if (!url) { if (f.dataset.locSrc === 'url') clearLoc(); setLocState(); return; }
+    if (!isMapLink(url)) { setLocState('⚠️ Googleマップのリンクではないようです'); return; }
+    setLocState('⏳ Googleマップの場所を読み取っています…');
+    try {
+      const r = await api('geocode', { address: url });
+      f.dataset.lat = r.lat; f.dataset.lng = r.lng; f.dataset.locSrc = 'url';
+      if (r.name && !$('#fPlace').value.trim()) $('#fPlace').value = r.name;
+      setLocState(`✅ Googleマップの場所を使います${r.name ? '（' + r.name + '）' : ''}`);
+    } catch (err) {
+      setLocState('⚠️ ' + err.message);
+    }
+  };
+  $('#fMapUrl').addEventListener('change', resolveMapLink);
+  $('#fMapPaste').onclick = async () => {
+    try { $('#fMapUrl').value = (await navigator.clipboard.readText()).trim(); }
+    catch { toast('貼り付けできませんでした。入力欄を長押しして貼り付けてください', false); return; }
+    resolveMapLink();
+  };
+  $('#fPlace').addEventListener('input', () => {
+    const v = $('#fPlace').value;
+    // 場所の欄にリンクを貼った場合はリンク欄へ移す
+    if (isMapLink(v)) { $('#fMapUrl').value = v.trim(); $('#fPlace').value = ''; resolveMapLink(); return; }
+    if (f.dataset.locSrc !== 'url') { clearLoc(); setLocState(); }
+  });
   $('#fLocBtn').onclick = () => {
     const area = $('#fArea').value.trim();
     const place = $('#fPlace').value.trim();
@@ -1350,7 +1385,7 @@ function openForm(item) {
       title: isEvent ? '会場の場所を決める' : '受け渡しの目安を決める',
       start: picked || (place ? null : (hasLoc(it) ? it : (hasLoc(S.user) ? S.user : S.base))),
       query: [area, place].filter(Boolean).join(' '),
-      onPick(pt) { f.dataset.lat = pt.lat; f.dataset.lng = pt.lng; setLocState(); }
+      onPick(pt) { f.dataset.lat = pt.lat; f.dataset.lng = pt.lng; f.dataset.locSrc = 'map'; setLocState(); }
     });
   };
 
@@ -1417,6 +1452,7 @@ function collectForm() {
     }
   };
   data.place = $('#fPlace').value.trim();
+  data.mapUrl = $('#fMapUrl').value.trim();
   if (f.dataset.lat) { data.lat = Number(f.dataset.lat); data.lng = Number(f.dataset.lng); }
   if (isEvent) {
     const v = $('#fDate').value;

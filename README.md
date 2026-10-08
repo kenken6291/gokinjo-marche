@@ -36,6 +36,7 @@ GitHub Pages（index.html + config.js） + GAS（Code.gs） + スプレッドシ
 | place | 受け渡しの目安の場所（任意） |
 | lat / lng | 受け渡し目安の位置（約100mぼかし） |
 | station | 最寄り駅JSON `{name, distance, lines}` |
+| mapUrl | 登録に使ったGoogleマップのリンク（任意） |
 
 ### Events（広場のイベント）
 | 列 | 内容 |
@@ -49,6 +50,7 @@ GitHub Pages（index.html + config.js） + GAS（Code.gs） + スプレッドシ
 | contacts | 外部通話・連絡先JSON（Postsと同じ形） |
 | area / createdAt | 地域 / 作成日時 |
 | lat / lng / station | 会場の位置 / 最寄り駅JSON |
+| mapUrl | 登録に使ったGoogleマップのリンク（任意） |
 
 ### Matches（参加・リアクション・申込）
 | 列 | 内容 |
@@ -89,13 +91,14 @@ GitHub Pages（index.html + config.js） + GAS（Code.gs） + スプレッドシ
 | eventMembers | 必要 | 参加者一覧（主催者・参加者のみ） |
 | createPost / updatePost / deletePost / requestPost | 必要 | おすそ分け（申込は投稿者へメール通知） |
 | aiWrite | 必要 | Geminiで見出し・タイトル・告知文を生成 |
-| geocode | 必要 | 住所・場所名 → 緯度経度（Apps Script標準のMapsサービス） |
+| geocode | 必要 | 住所・場所名・GoogleマップのURL（maps.app.goo.gl 短縮リンク可）→ 緯度経度 |
 | stations | 不要 | 最寄り駅3つ（HeartRails Express API） |
 
 ## メモ
 
 - 近さの目安：直線距離×1.3を道のりとし、徒歩80m/分・自転車250m/分・車400m/分で計算。すぐ近く＝徒歩10分、近場＝自転車10分、やや近場＝車10分。
 - 「最寄り駅3つ以内」：基準の場所の最寄り駅3つのどれかが、催し・投稿の最寄り駅と一致するものを表示。
+- GoogleマップのURLは、短縮リンクの転送先をたどり「URL内の座標 → 場所名で検索 → ページ内の座標」の順に読み取ります。エディタで `testMapUrl()` を実行すると確認できます。
 - 地図は Leaflet + OpenStreetMap（無料・APIキー不要）。
 
 - Google Meet はAPIで会議を自動発行できない（OAuthが必要）ため、「新しく作る」で `meet.google.com/new` を開き、表示されたリンクを貼り付ける方式です。

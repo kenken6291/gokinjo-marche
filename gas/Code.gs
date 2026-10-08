@@ -22,8 +22,8 @@ const DEFAULT_GEMINI_MODEL = 'gemini-3.8-flash';
 
 const SHEETS = {
   Users:   ['userId', 'email', 'passwordHash', 'salt', 'isTemp', 'area', 'nickname', 'createdAt', 'failCount', 'lockedUntil', 'lat', 'lng'],
-  Posts:   ['postId', 'userId', 'type', 'category', 'title', 'detail', 'imageUrl', 'status', 'area', 'contacts', 'createdAt', 'place', 'lat', 'lng', 'station'],
-  Events:  ['eventId', 'organizerId', 'category', 'title', 'datetime', 'place', 'detail', 'imageUrl', 'joinCount', 'likeCount', 'slots', 'contacts', 'area', 'createdAt', 'lat', 'lng', 'station'],
+  Posts:   ['postId', 'userId', 'type', 'category', 'title', 'detail', 'imageUrl', 'status', 'area', 'contacts', 'createdAt', 'place', 'lat', 'lng', 'station', 'mapUrl'],
+  Events:  ['eventId', 'organizerId', 'category', 'title', 'datetime', 'place', 'detail', 'imageUrl', 'joinCount', 'likeCount', 'slots', 'contacts', 'area', 'createdAt', 'lat', 'lng', 'station', 'mapUrl'],
   Matches: ['matchId', 'targetId', 'targetType', 'applicantId', 'kind', 'note', 'createdAt']
 };
 
@@ -454,7 +454,7 @@ function listEvents_(req, user) {
       return {
         eventId: ev.eventId, category: ev.category, title: ev.title, datetime: ev.datetime,
         place: ev.place, detail: ev.detail, imageUrl: ev.imageUrl, area: ev.area,
-        lat: num_(ev.lat), lng: num_(ev.lng), station: parseJson_(ev.station, null),
+        lat: num_(ev.lat), lng: num_(ev.lng), station: parseJson_(ev.station, null), mapUrl: ev.mapUrl || '',
         joinCount: Number(ev.joinCount || 0), likeCount: Number(ev.likeCount || 0),
         slots: slots,
         organizer: { userId: ev.organizerId, nickname: (users[ev.organizerId] || {}).nickname || '退会済み' },
@@ -485,7 +485,8 @@ function createEvent_(req, user) {
     slots: JSON.stringify(sanitizeSlots_(d.slots)),
     contacts: JSON.stringify(sanitizeContacts_(d.contacts)),
     area: clean_(d.area, 50) || user.area, createdAt: now_(),
-    lat: loc ? loc.lat : '', lng: loc ? loc.lng : '', station: loc && loc.station ? JSON.stringify(loc.station) : ''
+    lat: loc ? loc.lat : '', lng: loc ? loc.lng : '', station: loc && loc.station ? JSON.stringify(loc.station) : '',
+    mapUrl: cleanMapUrl_(d.mapUrl)
   };
   withLock_(() => append_('Events', ev));
   return { eventId: ev.eventId };
@@ -506,7 +507,8 @@ function updateEvent_(req, user) {
     });
     const place = clean_(d.place, 100) || ev.place;
     const area = clean_(d.area, 50) || ev.area;
-    const placeChanged = place !== String(ev.place) || area !== String(ev.area);
+    const mapUrl = d.mapUrl !== undefined ? cleanMapUrl_(d.mapUrl) : String(ev.mapUrl || '');
+    const placeChanged = place !== String(ev.place) || area !== String(ev.area) || mapUrl !== String(ev.mapUrl || '');
     let loc = null;
     if (validLatLng_(d.lat, d.lng) || placeChanged || num_(ev.lat) === null) {
       loc = resolveLocation_(d, place + ' ' + area, null, 6);
@@ -514,6 +516,7 @@ function updateEvent_(req, user) {
     updateRow_('Events', ev._row, {
       lat: loc ? loc.lat : undefined, lng: loc ? loc.lng : undefined,
       station: loc ? (loc.station ? JSON.stringify(loc.station) : '') : undefined,
+      mapUrl: mapUrl,
       category: EVENT_CATEGORIES.indexOf(d.category) !== -1 ? d.category : ev.category,
       title: clean_(d.title, 60) || ev.title,
       datetime: d.datetime && !isNaN(new Date(d.datetime)) ? new Date(d.datetime).toISOString() : ev.datetime,
@@ -632,7 +635,7 @@ function listPosts_(req, user) {
     return {
       postId: p.postId, type: p.type, category: p.category, title: p.title, detail: p.detail,
       imageUrl: p.imageUrl, status: p.status, area: p.area, createdAt: p.createdAt,
-      place: p.place, lat: num_(p.lat), lng: num_(p.lng), station: parseJson_(p.station, null),
+      place: p.place, lat: num_(p.lat), lng: num_(p.lng), station: parseJson_(p.station, null), mapUrl: p.mapUrl || '',
       owner: { userId: p.userId, nickname: (users[p.userId] || {}).nickname || '退会済み' },
       contacts: myId ? parseJson_(p.contacts, {}) : null,
       requestCount: rs.length,
@@ -659,7 +662,8 @@ function createPost_(req, user) {
     status: 'open', area: clean_(d.area, 50) || user.area,
     contacts: JSON.stringify(sanitizeContacts_(d.contacts)), createdAt: now_(),
     place: place, lat: loc ? loc.lat : '', lng: loc ? loc.lng : '',
-    station: loc && loc.station ? JSON.stringify(loc.station) : ''
+    station: loc && loc.station ? JSON.stringify(loc.station) : '',
+    mapUrl: cleanMapUrl_(d.mapUrl)
   };
   withLock_(() => append_('Posts', post));
   return { postId: post.postId };
@@ -685,7 +689,8 @@ function updatePost_(req, user) {
     if (d.imageUrl !== undefined) upd.imageUrl = clean_(d.imageUrl, 300);
     if (d.area !== undefined) upd.area = clean_(d.area, 50) || p.area;
     if (d.contacts !== undefined) upd.contacts = JSON.stringify(sanitizeContacts_(d.contacts));
-    if (d.place !== undefined || validLatLng_(d.lat, d.lng)) {
+    if (d.mapUrl !== undefined) upd.mapUrl = cleanMapUrl_(d.mapUrl);
+    if (d.place !== undefined || d.mapUrl !== undefined || validLatLng_(d.lat, d.lng)) {
       const place = d.place !== undefined ? clean_(d.place, 100) : String(p.place || '');
       const area = upd.area || p.area;
       const fallback = num_(user.lat) !== null ? { lat: num_(user.lat), lng: num_(user.lng) } : null;
@@ -830,7 +835,9 @@ function resolveLocation_(d, address, fallback, digits) {
   if (validLatLng_(d.lat, d.lng)) {
     lat = Number(d.lat); lng = Number(d.lng);
   } else {
-    const g = safeGeocode_(address);
+    let g = null;
+    if (d.mapUrl) { try { g = resolveMapUrl_(d.mapUrl); } catch (e) { console.warn('地図リンク解析失敗: ' + e); } }
+    if (!g) g = safeGeocode_(address);
     if (g) { lat = g.lat; lng = g.lng; }
     else if (fallback) { lat = fallback.lat; lng = fallback.lng; }
   }
@@ -841,11 +848,127 @@ function resolveLocation_(d, address, fallback, digits) {
 
 // API: 住所・場所名から位置を探す（会員のみ）
 function geocodeApi_(req) {
+  const raw = String(req.address || '').trim();
+  if (/^https?:\/\//i.test(raw)) {
+    const r = resolveMapUrl_(raw);
+    return { lat: r.lat, lng: r.lng, formatted: r.name || '', name: r.name || '', mapUrl: cleanMapUrl_(raw) };
+  }
   const q = clean_(req.address, 150);
   if (!q) throw new Error('住所か場所の名前を入力してください');
   const g = geocode_(q);
   if (!g) throw new Error('場所が見つかりませんでした。市区町村名から入れるか、地図をタップして選んでください');
   return { lat: g.lat, lng: g.lng, formatted: g.formatted };
+}
+
+// ===================== GoogleマップのURL =====================
+function isMapUrl_(url) {
+  return /^https:\/\/(maps\.app\.goo\.gl|goo\.gl\/maps|(www\.)?google\.[a-z.]+\/maps|maps\.google\.[a-z.]+)/i.test(String(url || '').trim());
+}
+
+function cleanMapUrl_(url) {
+  url = String(url || '').trim().slice(0, 500);
+  return isMapUrl_(url) ? url : '';
+}
+
+function safeDecode_(s) {
+  try { return decodeURIComponent(String(s).replace(/\+/g, ' ')); } catch (e) { return String(s); }
+}
+
+/** URL文字列から緯度経度を探す（場所そのものの座標 !3d!4d を最優先） */
+function coordsFromMapUrl_(url) {
+  const u = safeDecode_(url);
+  let m = u.match(/!3d(-?\d{1,2}\.\d+)!4d(-?\d{1,3}\.\d+)/);
+  if (m) return { lat: Number(m[1]), lng: Number(m[2]) };
+  m = u.match(/[?&](?:q|query|ll|center|daddr|destination|sll)=(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);
+  if (m) return { lat: Number(m[1]), lng: Number(m[2]) };
+  m = u.match(/\/search\/(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);
+  if (m) return { lat: Number(m[1]), lng: Number(m[2]) };
+  m = u.match(/@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/);
+  if (m) return { lat: Number(m[1]), lng: Number(m[2]) };
+  return null;
+}
+
+/** URL文字列から場所の名前を探す */
+function nameFromMapUrl_(url) {
+  const u = String(url);
+  let m = u.match(/\/maps\/place\/([^\/@?]+)/);
+  if (m) return safeDecode_(m[1]).trim();
+  m = u.match(/[?&](?:q|query)=([^&]+)/);
+  if (m) {
+    const t = safeDecode_(m[1]).trim();
+    if (!/^-?\d+\.\d+\s*,\s*-?\d+\.\d+$/.test(t)) return t;
+  }
+  return '';
+}
+
+function headerOf_(res, name) {
+  const h = res.getAllHeaders();
+  const key = Object.keys(h).find(k => k.toLowerCase() === name.toLowerCase());
+  if (!key) return '';
+  return Array.isArray(h[key]) ? h[key][0] : h[key];
+}
+
+/**
+ * GoogleマップのURL（短縮リンク maps.app.goo.gl も可）→ {lat, lng, name}
+ * 短縮リンクは転送先を順にたどり、URL内の座標 → 場所名で検索 → ページ内の座標 の順に探す
+ */
+function resolveMapUrl_(url) {
+  url = String(url || '').trim();
+  if (!isMapUrl_(url)) throw new Error('Googleマップのリンク（https://maps.app.goo.gl/… など）を入れてください');
+  const cache = CacheService.getScriptCache();
+  const key = 'mu_' + Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, url, Utilities.Charset.UTF_8)
+    .map(b => ('0' + (b & 0xff).toString(16)).slice(-2)).join('');
+  const hit = cache.get(key);
+  if (hit) return JSON.parse(hit);
+
+  let cur = url, name = '', body = '';
+  for (let i = 0; i < 8; i++) {
+    name = name || nameFromMapUrl_(cur);
+    const c = coordsFromMapUrl_(cur);
+    if (c && validLatLng_(c.lat, c.lng)) return saveMapHit_(cache, key, { lat: c.lat, lng: c.lng, name: name });
+
+    // 同意画面などに飛ばされた場合は continue= の先を使う
+    const cont = cur.match(/[?&]continue=([^&]+)/);
+    if (/consent\.google\./.test(cur) && cont) { cur = safeDecode_(cont[1]); continue; }
+
+    const res = UrlFetchApp.fetch(cur, {
+      followRedirects: false, muteHttpExceptions: true,
+      headers: { 'Accept-Language': 'ja', 'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/124 Mobile Safari/537.36' }
+    });
+    const code = res.getResponseCode();
+    const loc = headerOf_(res, 'Location');
+    if (code >= 300 && code < 400 && loc) {
+      cur = /^https?:/i.test(loc) ? loc : 'https://www.google.com' + loc;
+      continue;
+    }
+    body = res.getContentText();
+    break;
+  }
+
+  // 座標がURLに無い → 場所の名前で検索
+  if (name) {
+    const g = safeGeocode_(name);
+    if (g) return saveMapHit_(cache, key, { lat: g.lat, lng: g.lng, name: name });
+  }
+  // 最後の手段：ページ内の地図中心座標
+  if (body) {
+    const m = body.match(/APP_INITIALIZATION_STATE=\[\[\[-?[\d.]+,(-?\d{1,3}\.\d+),(-?\d{1,2}\.\d+)\]/);
+    if (m && validLatLng_(m[2], m[1])) return saveMapHit_(cache, key, { lat: Number(m[2]), lng: Number(m[1]), name: name });
+    const m2 = body.match(/(?:!3d|@)(-?\d{1,2}\.\d{4,})(?:!4d|,)(-?\d{1,3}\.\d{4,})/);
+    if (m2 && validLatLng_(m2[1], m2[2])) return saveMapHit_(cache, key, { lat: Number(m2[1]), lng: Number(m2[2]), name: name });
+  }
+  throw new Error('このリンクから場所を読み取れませんでした。Googleマップで場所を開き「共有」→「リンクをコピー」したものを貼ってください');
+}
+
+function saveMapHit_(cache, key, hit) {
+  cache.put(key, JSON.stringify(hit), 21600);
+  return hit;
+}
+
+/** エディタでの動作確認用（URLを書き換えて実行） */
+function testMapUrl() {
+  const url = 'https://maps.app.goo.gl/k5vexwDTTdxGkFoa6';
+  Logger.log(JSON.stringify(resolveMapUrl_(url)));
 }
 
 // API: 最寄り駅（ログイン不要）
