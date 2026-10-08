@@ -101,6 +101,13 @@ tailwind.config = {
   .label { display: block; font-weight: 700; margin-bottom: 4px; font-size: 16px; }
   .chip { min-height: 44px; padding: 4px 14px; border: 2px solid #3A2817; border-radius: 999px; background: #FFF9EC; font-weight: 700; white-space: nowrap; }
   .chip[aria-pressed="true"] { background: #3A2817; color: #FFF9EC; }
+  /* 投稿フォームの「種類」：文字が長くても折り返してボタン内に収める */
+  .choice-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); gap: 8px; }
+  .chip-choice { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 56px; padding: 8px 12px;
+                 border-radius: 16px; white-space: normal; line-height: 1.35; font-size: 16px; cursor: pointer; overflow-wrap: anywhere; }
+  .chip-choice:has(input:checked) { background: #E8A317; box-shadow: inset 0 -4px 0 #B97A06; }
+  .chip-choice input { flex-shrink: 0; }
+  [data-close] { white-space: nowrap; flex-shrink: 0; }
   .tabbtn { flex: 1; min-height: 64px; font-family: "Yusei Magic", sans-serif; font-size: 20px; border: 2px solid #3A2817; background: #FFF9EC; }
   .tabbtn[aria-selected="true"] { background: #E8A317; box-shadow: inset 0 -5px 0 #B97A06; }
   .tabbtn:first-child { border-radius: 16px 0 0 16px; }
@@ -232,7 +239,7 @@ tailwind.config = {
   <div class="sheet p-5 sm:p-7">
     <div class="flex justify-between items-start">
       <h2 id="authTitle" class="font-hand text-[26px]">ようこそ広場へ</h2>
-      <button class="btn btn-sub !min-h-[44px] !px-4" data-close>閉じる</button>
+      <button class="btn btn-sub !min-h-[44px] !px-4 shrink-0 whitespace-nowrap" data-close>閉じる</button>
     </div>
     <div class="flex gap-2 mt-3 flex-wrap" role="tablist">
       <button class="chip" data-auth="login" aria-pressed="true">ログイン</button>
@@ -298,7 +305,7 @@ tailwind.config = {
   <form class="sheet p-5 sm:p-7 space-y-4" id="fMe">
     <div class="flex justify-between items-start">
       <h2 class="font-hand text-[26px]">わたしの設定</h2>
-      <button type="button" class="btn btn-sub !min-h-[44px] !px-4" data-close>閉じる</button>
+      <button type="button" class="btn btn-sub !min-h-[44px] !px-4 shrink-0 whitespace-nowrap" data-close>閉じる</button>
     </div>
     <p id="meEmail" class="text-[15px]"></p>
     <div><label class="label" for="meNick">ニックネーム</label><input id="meNick" class="field" maxlength="30" required></div>
@@ -319,7 +326,7 @@ tailwind.config = {
   <div class="sheet p-4 sm:p-6 space-y-3">
     <div class="flex justify-between items-start">
       <h2 id="pickTitle" class="font-hand text-[24px]">地図で場所を選ぶ</h2>
-      <button type="button" class="btn btn-sub !min-h-[44px] !px-4" data-close>閉じる</button>
+      <button type="button" class="btn btn-sub !min-h-[44px] !px-4 shrink-0 whitespace-nowrap" data-close>閉じる</button>
     </div>
     <div id="pickSearch" class="flex gap-2">
       <label class="sr-only" for="pickQ">住所・場所の名前</label>
@@ -1315,12 +1322,13 @@ function openForm(item) {
   f.innerHTML = `
     <div class="flex justify-between items-start">
       <h2 class="font-hand text-[26px]">${editing ? '✏️ 内容を直す' : isEvent ? '🎪 催しを告知する' : '🎁 出品・お願いする'}</h2>
-      <button type="button" class="btn btn-sub !min-h-[44px] !px-4" data-close>閉じる</button>
+      <button type="button" class="btn btn-sub !min-h-[44px] !px-4 shrink-0 whitespace-nowrap" data-close>閉じる</button>
     </div>
     <fieldset><legend class="label">種類</legend>
-      <div class="grid grid-cols-2 gap-2">${Object.entries(cats).map(([k, c]) => `
-        <label class="chip flex items-center gap-2 cursor-pointer !rounded-2xl !min-h-[56px]">
-          <input type="radio" name="cat" value="${k}" class="w-5 h-5" ${it.category === k ? 'checked' : ''}> ${c.icon} ${c.label}</label>`).join('')}</div>
+      <div class="choice-grid">${Object.entries(cats).map(([k, c]) => `
+        <label class="chip chip-choice">
+          <input type="radio" name="cat" value="${k}" class="w-5 h-5 shrink-0" ${it.category === k ? 'checked' : ''}>
+          <span class="min-w-0 break-words">${c.icon} ${c.label}</span></label>`).join('')}</div>
     </fieldset>
     <div><label class="label" for="fTitle">タイトル</label><input id="fTitle" class="field" maxlength="60" value="${esc(it.title || '')}" placeholder="${isEvent ? '例：秋の朝どれ野菜マルシェ' : '例：大根がたくさん採れました'}"></div>
     ${isEvent ? `
