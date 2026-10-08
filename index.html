@@ -144,6 +144,18 @@ tailwind.config = {
   .lv-walk { background: #D3ECDF; } .lv-bike { background: #FFF0C2; } .lv-car { background: #F6D9C8; } .lv-far { background: #EDE6DA; }
   .viewbtn { min-height: 48px; padding: 0 16px; border: 2px solid #3A2817; background: #FFF9EC; font-weight: 700; }
   .viewbtn[aria-pressed="true"] { background: #3A2817; color: #FFF9EC; }
+  /* スマホ用：画面下に固定される「閉じる」ボタン */
+  .dlg-x {
+    position: sticky; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); z-index: 1000;
+    display: flex; align-items: center; justify-content: center; gap: .4em;
+    width: calc(100% - 28px); min-height: 56px; margin: 12px auto 12px;
+    background: #3A2817; color: #FFF9EC; border: 2px solid #FFF9EC; border-radius: 999px;
+    font-weight: 700; font-size: 18px; box-shadow: 0 4px 0 rgba(58,40,23,.35);
+  }
+  @media (min-width: 640px) { .dlg-x { display: none; } }
+  /* 地図の吹き出しの × を大きく */
+  .leaflet-container a.leaflet-popup-close-button { width: 44px; height: 44px; font: 30px/42px "Zen Maru Gothic", sans-serif; top: 0; right: 0; color: #3A2817; }
+  .leaflet-popup-content { margin-right: 40px; }
   .viewbtn:first-child { border-radius: 999px 0 0 999px; } .viewbtn:last-child { border-radius: 0 999px 999px 0; border-left: 0; }
 </style>
 </head>
@@ -492,6 +504,12 @@ async function copyText(text, label = 'コピーしました') {
   }).join('');
 })();
 
+/* ===== スマホ用の閉じるボタン ===== */
+function addCloseBar(sheet) {
+  if (!sheet || sheet.querySelector(':scope > .dlg-x')) return;
+  sheet.insertAdjacentHTML('beforeend', '<button type="button" class="dlg-x" data-close>✕ 閉じる</button>');
+}
+
 /* ===== パスワード表示切替 ===== */
 document.addEventListener('click', e => {
   const eye = e.target.closest('.eye');
@@ -805,8 +823,11 @@ function renderMap(items) {
     addTiles(mainMap);
     mainLayer = L.layerGroup().addTo(mainMap);
     mainMap.on('popupopen', e => {
-      const b = e.popup.getElement().querySelector('[data-open]');
-      if (b) b.onclick = () => openDetail(b.dataset.open);
+      const el = e.popup.getElement();
+      const b = el.querySelector('[data-open]');
+      if (b) b.onclick = () => { mainMap.closePopup(); openDetail(b.dataset.open); };
+      const c = el.querySelector('[data-popclose]');
+      if (c) c.onclick = () => mainMap.closePopup();
     });
   }
   mainLayer.clearLayers();
@@ -830,7 +851,10 @@ function renderMap(items) {
       .bindPopup(`<div><b style="font-size:17px">${esc(it.title)}</b><br>
         ${isEvents ? `🕙 ${esc(fmtDate(it.datetime))}<br>📍 ${esc(it.place)}<br>` : `🙂 ${esc(it.owner.nickname)} さん<br>`}
         ${distBadge(it)}<br>
-        <button class="btn btn-sub !min-h-[44px] mt-2" data-open="${esc(id)}">詳しく見る</button></div>`)
+        <div class="flex gap-2 mt-2">
+          <button class="btn btn-main !min-h-[44px] !px-4" data-open="${esc(id)}">詳しく見る</button>
+          <button class="btn btn-sub !min-h-[44px] !px-4" data-popclose>閉じる</button>
+        </div></div>`)
       .addTo(mainLayer);
     pts.push([it.lat, it.lng]);
   });
@@ -1022,6 +1046,7 @@ function openDetail(id) {
   const p = S.posts.find(x => x.postId === id);
   const body = $('#detailBody');
   body.innerHTML = ev ? eventDetail(ev) : postDetail(p);
+  addCloseBar(body);
   bindDetail(ev, p);
   if (!$('#dlgDetail').open) $('#dlgDetail').showModal();
   drawMiniMap(ev || p, !!ev);
@@ -1340,6 +1365,7 @@ function openForm(item) {
     ${contactFields(it.contacts || {})}
     <button class="btn btn-main w-full !min-h-[60px] text-[19px]">${editing ? '保存する' : isEvent ? '告知する' : '投稿する'}</button>
   `;
+  addCloseBar(f);
 
   // 場所
   const setLocState = (msg) => {
@@ -1534,6 +1560,7 @@ async function submitForm(e) {
 
 /* ===== 起動 ===== */
 (async function init() {
+  ['#dlgAuth .sheet', '#dlgMe .sheet', '#dlgPick .sheet'].forEach(sel => addCloseBar($(sel)));
   renderUser();
   renderBaseBar();
   if (S.base) setBase(S.base, false);
