@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ご近所マルシェ＆助け合い広場</title>
+<meta name="description" content="ご近所のマルシェ・フリマ・お祭り・おすそ分け・助け合いの広場">
+<meta name="theme-color" content="#F1DFBC">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎪</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Yusei+Magic&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        kraft: '#F1DFBC',   // クラフト紙
+        paper: '#FFF9EC',   // 値札の紙
+        ink:   '#3A2817',   // こげ茶インク
+        amber: { DEFAULT: '#E8A317', deep: '#B97A06' },
+        terra: { DEFAULT: '#B4532A', soft: '#F6D9C8' },
+        leaf:  { DEFAULT: '#1E7A57', soft: '#D3ECDF' },
+        indigo2: '#2F4A7A'
+      },
+      fontFamily: {
+        body: ['"Zen Maru Gothic"', '"Hiragino Maru Gothic ProN"', '"Meiryo"', 'sans-serif'],
+        hand: ['"Yusei Magic"', '"Zen Maru Gothic"', 'sans-serif']
+      }
+    }
+  }
+}
+</script>
+<style>
+  :root { box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  *, *::before, *::after { box-sizing: inherit; }
+  html { font-size: 17px; scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    font-family: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Meiryo", sans-serif;
+    background-color: #F1DFBC;
+    /* クラフト紙の繊維感 */
+    background-image:
+      radial-gradient(rgba(120,80,30,.07) 1px, transparent 1.2px),
+      radial-gradient(rgba(255,255,255,.18) 1px, transparent 1.4px);
+    background-size: 7px 7px, 11px 11px;
+    color: #3A2817;
+    line-height: 1.75;
+  }
+  img { max-width: 100%; }
+
+  /* ガーランド（三角旗） — このサイトの「顔」 */
+  .garland { position: relative; height: 46px; overflow: hidden; }
+  .garland::before {
+    content: ""; position: absolute; left: -10px; right: -10px; top: 6px; height: 14px;
+    border-bottom: 2px solid #7A5A3A; border-radius: 0 0 50% 50% / 0 0 100% 100%;
+  }
+  .garland ul { display: flex; justify-content: space-around; padding: 0 6px; margin: 0; list-style: none; position: relative; top: 12px; }
+  .garland li { width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 28px solid var(--c); transform-origin: top center; }
+  .garland li:nth-child(odd) { transform: rotate(-4deg) translateY(var(--y, 0)); }
+  .garland li:nth-child(even) { transform: rotate(3deg) translateY(var(--y, 0)); }
+  @media (prefers-reduced-motion: no-preference) {
+    .garland li { animation: sway 4.5s ease-in-out infinite; animation-delay: calc(var(--i) * -0.35s); }
+    @keyframes sway { 0%,100% { rotate: -2deg; } 50% { rotate: 3deg; } }
+  }
+
+  /* ハンコ風の日付 */
+  .stamp {
+    width: 74px; height: 74px; border-radius: 50%;
+    border: 3px solid #B4532A; color: #B4532A; background: rgba(255,249,236,.92);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-family: "Yusei Magic", sans-serif; line-height: 1.05; transform: rotate(-8deg);
+    box-shadow: inset 0 0 0 2px rgba(255,249,236,.9), inset 0 0 0 4px rgba(180,83,42,.35);
+  }
+  .stamp .m { font-size: 13px; }
+  .stamp .d { font-size: 28px; }
+  .stamp .w { font-size: 12px; }
+
+  /* 値札（おすそ分けカード用） */
+  .tag {
+    position: relative; display: inline-block; padding: 4px 14px 4px 22px; background: #FFF9EC;
+    border: 2px solid #3A2817; border-radius: 4px 10px 10px 4px; font-family: "Yusei Magic", sans-serif; font-size: 15px;
+    clip-path: polygon(10px 0, 100% 0, 100% 100%, 10px 100%, 0 50%);
+  }
+  .tag::before { content: ""; position: absolute; left: 11px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 50%; background: #3A2817; }
+
+  .card { background: #FFF9EC; border: 2px solid #3A2817; border-radius: 18px; box-shadow: 4px 5px 0 #3A2817; }
+  .card-btn:focus-visible, button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 3px solid #2F4A7A; outline-offset: 3px;
+  }
+  .btn { min-height: 52px; padding: 0 20px; border-radius: 999px; border: 2px solid #3A2817; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: .4em; }
+  .btn:active { transform: translateY(2px); }
+  .btn-main { background: #B4532A; color: #fff; box-shadow: 0 3px 0 #3A2817; }
+  .btn-leaf { background: #1E7A57; color: #fff; box-shadow: 0 3px 0 #3A2817; }
+  .btn-sub  { background: #FFF9EC; color: #3A2817; }
+  .btn[disabled] { opacity: .55; }
+  .field { width: 100%; min-height: 52px; padding: 10px 14px; border: 2px solid #8A6A48; border-radius: 12px; background: #fff; font-size: 17px; }
+  textarea.field { min-height: 120px; line-height: 1.7; }
+  .label { display: block; font-weight: 700; margin-bottom: 4px; font-size: 16px; }
+  .chip { min-height: 44px; padding: 4px 14px; border: 2px solid #3A2817; border-radius: 999px; background: #FFF9EC; font-weight: 700; white-space: nowrap; }
+  .chip[aria-pressed="true"] { background: #3A2817; color: #FFF9EC; }
+  .tabbtn { flex: 1; min-height: 64px; font-family: "Yusei Magic", sans-serif; font-size: 20px; border: 2px solid #3A2817; background: #FFF9EC; }
+  .tabbtn[aria-selected="true"] { background: #E8A317; box-shadow: inset 0 -5px 0 #B97A06; }
+  .tabbtn:first-child { border-radius: 16px 0 0 16px; }
+  .tabbtn:last-child  { border-radius: 0 16px 16px 0; border-left: 0; }
+
+  dialog { border: 0; padding: 0; background: transparent; max-width: 100vw; max-height: 100vh; }
+  dialog::backdrop { background: rgba(58,40,23,.55); }
+  .sheet { background: #FFF9EC; border: 2px solid #3A2817; border-radius: 22px; width: min(640px, calc(100vw - 20px)); max-height: calc(100dvh - 40px); overflow-y: auto; }
+  .disclaimer { background: #FFF3C8; border: 2px dashed #B97A06; border-radius: 12px; padding: 12px 14px; font-size: 15px; }
+  .contact-btn { min-height: 56px; border-radius: 14px; border: 2px solid #3A2817; font-weight: 700; display: flex; align-items: center; gap: .5em; padding: 0 14px; color: #fff; }
+  .copy-btn { min-height: 56px; min-width: 56px; border-radius: 14px; border: 2px solid #3A2817; background: #FFF9EC; font-weight: 700; padding: 0 10px; font-size: 15px; }
+  .fab { position: fixed; right: 16px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 30; min-height: 64px; font-size: 18px; padding: 0 24px; }
+  #toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 60; }
+  .count-pop { display: inline-block; }
+  @media (prefers-reduced-motion: no-preference) {
+    .count-pop.bump { animation: bump .45s ease; }
+    @keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.45); } 100% { transform: scale(1); } }
+  }
+  .clamp3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .scroll-x { overflow-x: auto; scrollbar-width: thin; }
+</style>
+</head>
+<body class="min-h-screen pb-28">
+
+<!-- ===== ヘッダー ===== -->
+<header class="bg-paper border-b-2 border-ink">
+  <div class="garland" aria-hidden="true">
+    <ul id="garland"></ul>
+  </div>
+  <div class="max-w-5xl mx-auto px-4 pb-4 pt-1 flex items-end justify-between gap-3 flex-wrap">
+    <div>
+      <h1 class="font-hand text-[30px] sm:text-[38px] leading-tight">ご近所マルシェ<span class="text-[22px] sm:text-[26px]">＆</span>助け合い広場</h1>
+      <p class="text-[15px] text-ink/80">マルシェ・フリマ・お祭りの告知と、おすそ分け・貸し借り・お手伝い。</p>
+    </div>
+    <div id="userBox" class="flex items-center gap-2"></div>
+  </div>
+</header>
+
+<main class="max-w-5xl mx-auto px-4">
+  <!-- タブ -->
+  <div class="flex mt-5" role="tablist" aria-label="表示の切り替え">
+    <button class="tabbtn" role="tab" id="tab-events" aria-selected="true" aria-controls="panel" data-tab="events">🎪 地域のイベント</button>
+    <button class="tabbtn" role="tab" id="tab-posts" aria-selected="false" aria-controls="panel" data-tab="posts">🎁 おすそ分け・助け合い</button>
+  </div>
+
+  <!-- 絞り込み -->
+  <section class="mt-4 space-y-3" aria-label="絞り込み">
+    <div class="flex gap-2 scroll-x pb-1" id="chips"></div>
+    <div class="flex gap-2 flex-wrap items-center">
+      <label class="sr-only" for="q">キーワードで探す</label>
+      <input id="q" class="field flex-1 min-w-[200px]" type="search" placeholder="🔍 キーワード（例：野菜、公民館）">
+      <label class="chip flex items-center gap-2 cursor-pointer" id="myAreaWrap">
+        <input type="checkbox" id="myArea" class="w-5 h-5 accent-[#1E7A57]"> わたしの地域だけ
+      </label>
+    </div>
+  </section>
+
+  <section id="panel" role="tabpanel" aria-live="polite" class="mt-5">
+    <div id="list" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"></div>
+  </section>
+
+  <p class="disclaimer mt-8">⚠️ 当サイトは地域コミュニティの広場です。実際の受け渡し、対面交流、外部ツールでの連絡・通話は、当事者同士の自己責任のもと安全に行ってください。</p>
+</main>
+
+<button id="fab" class="btn btn-main fab">＋ 催しを告知する</button>
+<div id="toast" class="hidden"></div>
+
+<!-- ===== ログイン・登録 ===== -->
+<dialog id="dlgAuth" aria-labelledby="authTitle">
+  <div class="sheet p-5 sm:p-7">
+    <div class="flex justify-between items-start">
+      <h2 id="authTitle" class="font-hand text-[26px]">ようこそ広場へ</h2>
+      <button class="btn btn-sub !min-h-[44px] !px-4" data-close>閉じる</button>
+    </div>
+    <div class="flex gap-2 mt-3 flex-wrap" role="tablist">
+      <button class="chip" data-auth="login" aria-pressed="true">ログイン</button>
+      <button class="chip" data-auth="register" aria-pressed="false">はじめての方（登録）</button>
+      <button class="chip" data-auth="reset" aria-pressed="false">パスワードを忘れた</button>
+    </div>
+
+    <form id="fLogin" class="mt-5 space-y-4" data-authform="login">
+      <div><label class="label" for="liEmail">メールアドレス</label><input id="liEmail" class="field" type="email" autocomplete="email" required></div>
+      <div><label class="label" for="liPw">パスワード</label>
+        <div class="relative"><input id="liPw" class="field pr-16" type="password" autocomplete="current-password" required><button type="button" class="eye absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 text-2xl" aria-label="パスワードを表示">👁</button></div>
+      </div>
+      <button class="btn btn-main w-full text-[18px]">ログインする</button>
+    </form>
+
+    <form id="fRegister" class="mt-5 space-y-4 hidden" data-authform="register">
+      <div><label class="label" for="rgEmail">メールアドレス</label><input id="rgEmail" class="field" type="email" autocomplete="email" required></div>
+      <div><label class="label" for="rgNick">ニックネーム（ほかの人に表示されます）</label><input id="rgNick" class="field" maxlength="30" required placeholder="例：みどり町のたけさん"></div>
+      <div><label class="label" for="rgArea">地域（町名・地区など）</label><input id="rgArea" class="field" maxlength="50" required placeholder="例：みどり町3丁目"></div>
+      <p class="text-[15px]">登録すると、仮パスワードがメールで届きます。迷惑メールフォルダもご確認ください。</p>
+      <button class="btn btn-leaf w-full text-[18px]">仮パスワードを受け取る</button>
+    </form>
+
+    <form id="fReset" class="mt-5 space-y-4 hidden" data-authform="reset">
+      <div><label class="label" for="rsEmail">登録したメールアドレス</label><input id="rsEmail" class="field" type="email" autocomplete="email" required></div>
+      <p class="text-[15px]">新しい仮パスワードをメールでお送りします。</p>
+      <button class="btn btn-leaf w-full text-[18px]">仮パスワードを再発行する</button>
+    </form>
+  </div>
+</dialog>
+
+<!-- ===== 本パスワード設定（強制） ===== -->
+<dialog id="dlgPw" aria-labelledby="pwTitle">
+  <form id="fPw" class="sheet p-5 sm:p-7 space-y-4">
+    <h2 id="pwTitle" class="font-hand text-[26px]">🔑 本パスワードを決めましょう</h2>
+    <p id="pwLead">仮パスワードでログインしました。ご自分で覚えやすいパスワードに変えてください。設定が終わるまで、ほかの機能は使えません。</p>
+    <div id="pwCurWrap" class="hidden"><label class="label" for="pwCur">今のパスワード</label>
+      <div class="relative"><input id="pwCur" class="field pr-16" type="password" autocomplete="current-password"><button type="button" class="eye absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 text-2xl" aria-label="パスワードを表示">👁</button></div>
+    </div>
+    <div><label class="label" for="pwNew">新しいパスワード（英字と数字をまぜて8文字以上）</label>
+      <div class="relative"><input id="pwNew" class="field pr-16" type="password" autocomplete="new-password" required minlength="8"><button type="button" class="eye absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 text-2xl" aria-label="パスワードを表示">👁</button></div>
+    </div>
+    <div><label class="label" for="pwNew2">もう一度入力</label>
+      <div class="relative"><input id="pwNew2" class="field pr-16" type="password" autocomplete="new-password" required minlength="8"><button type="button" class="eye absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 text-2xl" aria-label="パスワードを表示">👁</button></div>
+    </div>
+    <div class="flex gap-2 flex-wrap">
+      <button class="btn btn-main flex-1 text-[18px]">パスワードを設定する</button>
+      <button type="button" id="pwCancel" class="btn btn-sub hidden">やめる</button>
+      <button type="button" id="pwLogout" class="btn btn-sub">ログアウト</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ===== 詳細 ===== -->
+<dialog id="dlgDetail"><div class="sheet" id="detailBody"></div></dialog>
+
+<!-- ===== 投稿フォーム ===== -->
+<dialog id="dlgForm"><form class="sheet p-5 sm:p-7 space-y-5" id="fItem" novalidate></form></dialog>
+
+<!-- ===== マイページ ===== -->
+<dialog id="dlgMe">
+  <form class="sheet p-5 sm:p-7 space-y-4" id="fMe">
+    <div class="flex justify-between items-start">
+      <h2 class="font-hand text-[26px]">わたしの設定</h2>
+      <button type="button" class="btn btn-sub !min-h-[44px] !px-4" data-close>閉じる</button>
+    </div>
+    <p id="meEmail" class="text-[15px]"></p>
+    <div><label class="label" for="meNick">ニックネーム</label><input id="meNick" class="field" maxlength="30" required></div>
+    <div><label class="label" for="meArea">地域</label><input id="meArea" class="field" maxlength="50" required></div>
+    <button class="btn btn-leaf w-full">保存する</button>
+    <div class="flex gap-2 flex-wrap pt-2 border-t-2 border-dashed border-ink/30">
+      <button type="button" id="meMine" class="btn btn-sub flex-1">自分の投稿を見る</button>
+      <button type="button" id="mePw" class="btn btn-sub flex-1">パスワードを変える</button>
+      <button type="button" id="meLogout" class="btn btn-sub flex-1">ログアウト</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="config.js"></script>
+<script>
+/* ===== 設定（config.js から読み込み） ===== */
+const CONFIG = window.APP_CONFIG || {};
+const GAS_URL = CONFIG.GAS_URL || '';
+
+/* ===== 定義 ===== */
+const EVENT_CATS = {
+  marche:  { label: 'マルシェ', icon: '🎪', color: '#E8A317' },
+  flea:    { label: 'フリーマーケット', icon: '📦', color: '#2F4A7A' },
+  offkai:  { label: 'オフ会・交流会', icon: '☕', color: '#7A4E2D' },
+  matsuri: { label: 'お祭り・季節行事', icon: '🏮', color: '#B4532A' },
+  help:    { label: 'お手伝い募集', icon: '🤝', color: '#1E7A57' }
+};
+const POST_CATS = {
+  vegetable: { label: '採れたて野菜・おすそ分け', icon: '🥬', color: '#1E7A57' },
+  lend:      { label: '道具の貸し借り', icon: '🪑', color: '#7A4E2D' },
+  barter:    { label: '物々交換', icon: '🎁', color: '#B4532A' },
+  help:      { label: 'ちょっとしたお手伝い', icon: '🛠️', color: '#2F4A7A' }
+};
+const POST_STATUS = {
+  open:    { label: '募集中', cls: 'bg-leaf text-white' },
+  talking: { label: '相談中', cls: 'bg-amber text-ink' },
+  done:    { label: '受け渡し済み', cls: 'bg-ink/60 text-white' }
+};
+const DISCLAIMER = '※当サイトは地域コミュニティの広場です。実際の受け渡し、対面交流、外部ツールでの連絡・通話は、当事者同士の自己責任のもと安全に行ってください。';
+
+/* ===== 状態 ===== */
+const S = {
+  token: localStorage.getItem('gm_token') || '',
+  user: JSON.parse(localStorage.getItem('gm_user') || 'null'),
+  tab: 'events',
+  cat: 'all',
+  events: [],
+  posts: [],
+  onlyMine: false,
+  pendingImage: null
+};
+
+/* ===== ユーティリティ ===== */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const nl2br = s => esc(s).replace(/\n/g, '<br>');
+const WD = ['日', '月', '火', '水', '木', '金', '土'];
+
+function fmtDate(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  return `${d.getMonth() + 1}月${d.getDate()}日(${WD[d.getDay()]}) ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+function toLocalInput(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+function toast(msg, ok = true) {
+  const t = $('#toast');
+  t.className = `px-5 py-3 rounded-full border-2 border-ink font-bold shadow-[3px_3px_0_#3A2817] ${ok ? 'bg-leaf-soft' : 'bg-terra-soft'}`;
+  t.textContent = msg;
+  t.setAttribute('role', 'status');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.className = 'hidden', 3200);
+}
+
+async function api(action, payload = {}) {
+  if (!GAS_URL || GAS_URL.includes('XXXX')) throw new Error('config.js の GAS_URL を設定してください');
+  // Content-Type を text/plain にしてCORSのプリフライトを回避
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action, token: S.token, ...payload }),
+    redirect: 'follow'
+  });
+  const data = await res.json();
+  if (!data.ok) {
+    if (data.code === 'AUTH') { clearSession(); renderUser(); openAuth('login'); }
+    if (data.code === 'TEMP') openPwDialog(true);
+    throw new Error(data.error || 'エラーが発生しました');
+  }
+  return data;
+}
+
+function setBusy(btn, busy, text) {
+  if (!btn) return;
+  if (busy) { btn.dataset.label = btn.innerHTML; btn.disabled = true; btn.innerHTML = text || '⏳ 送信中…'; }
+  else { btn.disabled = false; if (btn.dataset.label) btn.innerHTML = btn.dataset.label; }
+}
+
+function saveSession(token, user) {
+  S.token = token; S.user = user;
+  localStorage.setItem('gm_token', token);
+  localStorage.setItem('gm_user', JSON.stringify(user));
+}
+function clearSession() {
+  S.token = ''; S.user = null;
+  localStorage.removeItem('gm_token'); localStorage.removeItem('gm_user');
+}
+
+function needLogin() {
+  if (S.user) return false;
+  toast('ログインすると使えます', false);
+  openAuth('login');
+  return true;
+}
+
+async function copyText(text, label = 'コピーしました') {
+  try { await navigator.clipboard.writeText(text); toast('📋 ' + label); }
+  catch {
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove(); toast('📋 ' + label);
+  }
+}
+
+/* ===== ガーランド ===== */
+(function buildGarland() {
+  const colors = ['#E8A317', '#B4532A', '#1E7A57', '#2F4A7A', '#F6D9C8', '#D3ECDF'];
+  const n = Math.max(10, Math.round(window.innerWidth / 44));
+  $('#garland').innerHTML = Array.from({ length: n }, (_, i) => {
+    const y = Math.round(Math.sin((i / (n - 1)) * Math.PI) * 9);
+    return `<li style="--c:${colors[i % colors.length]};--i:${i};--y:${y}px"></li>`;
+  }).join('');
+})();
+
+/* ===== パスワード表示切替 ===== */
+document.addEventListener('click', e => {
+  const eye = e.target.closest('.eye');
+  if (!eye) return;
+  const input = eye.parentElement.querySelector('input');
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  eye.textContent = show ? '🙈' : '👁';
+  eye.setAttribute('aria-label', show ? 'パスワードを隠す' : 'パスワードを表示');
+});
+document.addEventListener('click', e => {
+  const c = e.target.closest('[data-close]');
+  if (c) c.closest('dialog').close();
+});
+
+/* ===== ユーザー表示 ===== */
+function renderUser() {
+  const box = $('#userBox');
+  if (S.user) {
+    box.innerHTML = `<button id="btnMe" class="btn btn-sub">🙂 ${esc(S.user.nickname)} さん</button>`;
+    $('#btnMe').onclick = openMe;
+  } else {
+    box.innerHTML = `<button id="btnLogin" class="btn btn-leaf">ログイン / 登録</button>`;
+    $('#btnLogin').onclick = () => openAuth('login');
+  }
+  $('#myAreaWrap').classList.toggle('hidden', !S.user);
+}
+
+/* ===== 認証ダイアログ ===== */
+function openAuth(mode) {
+  $$('[data-auth]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.auth === mode)));
+  $$('[data-authform]').forEach(f => f.classList.toggle('hidden', f.dataset.authform !== mode));
+  if (!$('#dlgAuth').open) $('#dlgAuth').showModal();
+}
+$$('[data-auth]').forEach(b => b.onclick = () => openAuth(b.dataset.auth));
+
+$('#fLogin').onsubmit = async e => {
+  e.preventDefault();
+  const btn = e.submitter;
+  setBusy(btn, true, '⏳ 確認中…');
+  try {
+    const r = await api('login', { email: $('#liEmail').value.trim(), password: $('#liPw').value });
+    saveSession(r.token, r.user);
+    $('#dlgAuth').close(); $('#liPw').value = '';
+    renderUser();
+    if (r.user.isTemp) openPwDialog(true);
+    else { toast(`おかえりなさい、${r.user.nickname}さん`); loadAll(); }
+  } catch (err) { toast(err.message, false); }
+  finally { setBusy(btn, false); }
+};
+
+$('#fRegister').onsubmit = async e => {
+  e.preventDefault();
+  const btn = e.submitter;
+  setBusy(btn, true);
+  try {
+    const email = $('#rgEmail').value.trim();
+    const r = await api('register', { email, nickname: $('#rgNick').value.trim(), area: $('#rgArea').value.trim() });
+    toast(r.message);
+    $('#liEmail').value = email;
+    openAuth('login');
+    $('#liPw').focus();
+  } catch (err) { toast(err.message, false); }
+  finally { setBusy(btn, false); }
+};
+
+$('#fReset').onsubmit = async e => {
+  e.preventDefault();
+  const btn = e.submitter;
+  setBusy(btn, true);
+  try {
+    const email = $('#rsEmail').value.trim();
+    const r = await api('resetPassword', { email });
+    toast(r.message);
+    $('#liEmail').value = email;
+    openAuth('login');
+  } catch (err) { toast(err.message, false); }
+  finally { setBusy(btn, false); }
+};
+
+/* ===== パスワード設定 ===== */
+function openPwDialog(forced) {
+  const d = $('#dlgPw');
+  $('#pwCurWrap').classList.toggle('hidden', forced);
+  $('#pwCancel').classList.toggle('hidden', forced);
+  $('#pwLead').textContent = forced
+    ? '仮パスワードでログインしました。ご自分で覚えやすいパスワードに変えてください。設定が終わるまで、ほかの機能は使えません。'
+    : '今のパスワードと、新しいパスワードを入力してください。';
+  d.dataset.forced = forced ? '1' : '';
+  $('#fPw').reset();
+  if (!d.open) d.showModal();
+}
+// 強制モードではEscで閉じられないようにする
+$('#dlgPw').addEventListener('cancel', e => { if ($('#dlgPw').dataset.forced) e.preventDefault(); });
+$('#pwCancel').onclick = () => $('#dlgPw').close();
+$('#pwLogout').onclick = doLogout;
+
+$('#fPw').onsubmit = async e => {
+  e.preventDefault();
+  const a = $('#pwNew').value, b = $('#pwNew2').value;
+  if (a !== b) return toast('2回の入力が一致していません', false);
+  if (a.length < 8 || !/[A-Za-z]/.test(a) || !/\d/.test(a)) return toast('英字と数字をまぜて8文字以上にしてください', false);
+  const btn = e.submitter;
+  setBusy(btn, true);
+  try {
+    const payload = { newPassword: a };
+    if (!$('#dlgPw').dataset.forced) payload.currentPassword = $('#pwCur').value;
+    const r = await api('changePassword', payload);
+    saveSession(S.token, r.user);
+    $('#dlgPw').dataset.forced = '';
+    $('#dlgPw').close();
+    renderUser();
+    toast('パスワードを設定しました。ようこそ！');
+    loadAll();
+  } catch (err) { toast(err.message, false); }
+  finally { setBusy(btn, false); }
+};
+
+async function doLogout() {
+  try { await api('logout'); } catch {}
+  clearSession();
+  $$('dialog').forEach(d => { d.dataset.forced = ''; if (d.open) d.close(); });
+  renderUser();
+  toast('ログアウトしました');
+  loadAll();
+}
+
+/* ===== マイページ ===== */
+function openMe() {
+  $('#meEmail').textContent = 'メール：' + S.user.email;
+  $('#meNick').value = S.user.nickname;
+  $('#meArea').value = S.user.area;
+  $('#dlgMe').showModal();
+}
+$('#fMe').onsubmit = async e => {
+  e.preventDefault();
+  const btn = e.submitter;
+  setBusy(btn, true);
+  try {
+    const r = await api('updateProfile', { nickname: $('#meNick').value.trim(), area: $('#meArea').value.trim() });
+    saveSession(S.token, r.user);
+    renderUser(); toast('保存しました');
+    $('#dlgMe').close();
+  } catch (err) { toast(err.message, false); }
+  finally { setBusy(btn, false); }
+};
+$('#mePw').onclick = () => { $('#dlgMe').close(); openPwDialog(false); };
+$('#meLogout').onclick = doLogout;
+$('#meMine').onclick = () => {
+  S.onlyMine = !S.onlyMine;
+  $('#meMine').textContent = S.onlyMine ? 'すべての投稿を見る' : '自分の投稿を見る';
+  $('#dlgMe').close();
+  render();
+  if (S.onlyMine) toast('自分の投稿だけを表示しています');
+};
+
+/* ===== タブ・絞り込み ===== */
+$$('[data-tab]').forEach(b => b.onclick = () => {
+  S.tab = b.dataset.tab; S.cat = 'all';
+  $$('[data-tab]').forEach(x => x.setAttribute('aria-selected', String(x === b)));
+  $('#fab').textContent = S.tab === 'events' ? '＋ 催しを告知する' : '＋ 出品・お願いする';
+  render();
+});
+$('#q').addEventListener('input', () => { clearTimeout(render._t); render._t = setTimeout(render, 200); });
+$('#myArea').onchange = render;
+
+function renderChips() {
+  const cats = S.tab === 'events' ? EVENT_CATS : POST_CATS;
+  $('#chips').innerHTML = [`<button class="chip" data-cat="all" aria-pressed="${S.cat === 'all'}">すべて</button>`]
+    .concat(Object.entries(cats).map(([k, c]) => `<button class="chip" data-cat="${k}" aria-pressed="${S.cat === k}">${c.icon} ${c.label}</button>`))
+    .join('');
+  $$('[data-cat]').forEach(b => b.onclick = () => { S.cat = b.dataset.cat; render(); });
+}
+
+/* ===== 一覧描画 ===== */
+function filtered() {
+  const q = $('#q').value.trim().toLowerCase();
+  const onlyArea = $('#myArea').checked && S.user;
+  const items = S.tab === 'events' ? S.events : S.posts;
+  return items.filter(it => {
+    if (S.cat !== 'all' && it.category !== S.cat) return false;
+    if (S.onlyMine && !it.isOwner) return false;
+    if (onlyArea && it.area && !String(it.area).includes(S.user.area) && !String(S.user.area).includes(it.area)) return false;
+    if (q) {
+      const hay = [it.title, it.detail, it.place, it.area, (it.organizer || it.owner || {}).nickname].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function render() {
+  renderChips();
+  const items = filtered();
+  const list = $('#list');
+  if (!items.length) {
+    list.innerHTML = `<div class="sm:col-span-2 lg:col-span-3 card p-8 text-center">
+      <p class="font-hand text-[22px]">${S.tab === 'events' ? 'まだ催しの告知がありません' : 'まだ投稿がありません'}</p>
+      <p class="mt-2">${S.tab === 'events' ? 'マルシェやお茶会など、最初の催しを告知してみませんか。' : '余った野菜や使わない道具、困りごとを載せてみましょう。'}</p>
+      <button class="btn btn-main mt-4" onclick="openForm()">${S.tab === 'events' ? '＋ 催しを告知する' : '＋ 出品・お願いする'}</button>
+    </div>`;
+    return;
+  }
+  list.innerHTML = items.map(S.tab === 'events' ? eventCard : postCard).join('');
+  $$('[data-open]', list).forEach(el => el.onclick = () => openDetail(el.dataset.open));
+}
+
+function imgOrPlaceholder(url, cat) {
+  return url
+    ? `<img src="${esc(url)}" alt="" loading="lazy" referrerpolicy="no-referrer" class="w-full h-48 object-cover rounded-t-[16px] border-b-2 border-ink">`
+    : `<div class="w-full h-48 rounded-t-[16px] border-b-2 border-ink flex items-center justify-center text-[64px]" style="background:${cat.color}22">${cat.icon}</div>`;
+}
+
+function eventCard(ev) {
+  const c = EVENT_CATS[ev.category] || EVENT_CATS.marche;
+  const d = new Date(ev.datetime);
+  const slotsLeft = ev.slots.reduce((n, s) => n + Math.max(0, s.capacity - s.count), 0);
+  return `<article class="card relative">
+    <button class="card-btn block w-full text-left rounded-[16px]" data-open="${esc(ev.eventId)}" aria-label="${esc(ev.title)}の詳細を見る">
+      ${imgOrPlaceholder(ev.imageUrl, c)}
+      <div class="stamp absolute right-3 top-36" aria-hidden="true"><span class="m">${d.getMonth() + 1}月</span><span class="d">${d.getDate()}</span><span class="w">${WD[d.getDay()]}曜</span></div>
+      <div class="p-4 pr-24">
+        <span class="inline-block px-3 py-0.5 rounded-full text-white text-[15px] font-bold" style="background:${c.color}">${c.icon} ${c.label}</span>
+        <h3 class="font-hand text-[22px] leading-snug mt-2">${esc(ev.title)}</h3>
+      </div>
+      <div class="px-4 pb-4 -mt-2 space-y-1 text-[16px]">
+        <p>🕙 ${esc(fmtDate(ev.datetime))}</p>
+        <p>📍 ${esc(ev.place)}${ev.area ? `（${esc(ev.area)}）` : ''}</p>
+        <p class="flex gap-4 pt-1 font-bold"><span>🙋 参加予定 ${ev.joinCount}人</span><span>👍 ${ev.likeCount}</span>${slotsLeft ? `<span class="text-terra">🧺 募集あり</span>` : ''}</p>
+      </div>
+    </button>
+  </article>`;
+}
+
+function postCard(p) {
+  const c = POST_CATS[p.category] || POST_CATS.barter;
+  const st = POST_STATUS[p.status] || POST_STATUS.open;
+  return `<article class="card">
+    <button class="card-btn block w-full text-left rounded-[16px]" data-open="${esc(p.postId)}" aria-label="${esc(p.title)}の詳細を見る">
+      ${imgOrPlaceholder(p.imageUrl, c)}
+      <div class="p-4 space-y-2">
+        <div class="flex items-center gap-2 flex-wrap"><span class="tag">${c.icon} ${c.label}</span><span class="px-3 rounded-full text-[15px] font-bold ${st.cls}">${st.label}</span></div>
+        <h3 class="font-hand text-[22px] leading-snug">${esc(p.title)}</h3>
+        <p class="clamp3 text-[16px]">${esc(p.detail)}</p>
+        <p class="text-[15px]">🙂 ${esc(p.owner.nickname)} ${p.area ? `／📍${esc(p.area)}` : ''}${p.requestCount ? `／🙋 ${p.requestCount}件の申込` : ''}</p>
+      </div>
+    </button>
+  </article>`;
+}
+
+/* ===== 読み込み ===== */
+async function loadAll() {
+  $('#list').innerHTML = `<p class="sm:col-span-2 lg:col-span-3 text-center py-10 font-hand text-[22px]">⏳ 広場を準備しています…</p>`;
+  try {
+    const [e, p] = await Promise.all([api('listEvents'), api('listPosts')]);
+    S.events = e.events; S.posts = p.posts;
+    render();
+  } catch (err) {
+    $('#list').innerHTML = `<div class="sm:col-span-2 lg:col-span-3 card p-6"><p class="font-bold">読み込めませんでした：${esc(err.message)}</p><button class="btn btn-sub mt-3" onclick="loadAll()">もう一度読み込む</button></div>`;
+  }
+}
+
+/* ===== 連絡パネル ===== */
+function contactPanel(contacts, ownerLabel) {
+  if (!S.user) {
+    return `<div class="card !shadow-none p-4"><p>📞 連絡先・ビデオ通話のリンクは、ログインすると表示されます。</p>
+      <button class="btn btn-leaf mt-3" onclick="openAuth('login')">ログイン / 登録</button></div>`;
+  }
+  const c = contacts || {};
+  const rows = [];
+  const add = (key, icon, label, bg, href, copyVal) => {
+    if (!c[key]) return;
+    rows.push(`<div class="flex gap-2">
+      <a class="contact-btn flex-1" style="background:${bg}" href="${esc(href)}" target="_blank" rel="noopener noreferrer">${icon} ${label}</a>
+      <button class="copy-btn" data-copy="${esc(copyVal)}" aria-label="${label}のリンクをコピー">📋<br class="sm:hidden"> コピー</button>
+    </div>`);
+  };
+  add('zoom', '🔵', 'Zoomに参加する', '#2D6BE0', c.zoom, c.zoom);
+  add('meet', '🟢', 'Google Meetに参加する', '#1E7A57', c.meet, c.meet);
+  add('line', '🟢', 'LINEで友だち追加', '#06A84E', c.line, c.line);
+  add('facebook', '🔵', 'Facebookを開く', '#2F4A7A', c.facebook, c.facebook);
+  add('email', '✉️', 'メールを送る', '#7A4E2D', 'mailto:' + (c.email || ''), c.email);
+  add('phone', '📞', '電話をかける', '#B4532A', 'tel:' + (c.phone || ''), c.phone);
+  return `<section class="space-y-3" aria-label="連絡・ビデオ通話">
+    <h4 class="font-hand text-[20px]">📞 ${esc(ownerLabel)}への連絡・顔合わせ</h4>
+    ${rows.length ? rows.join('') : '<p>連絡先は載っていません。</p>'}
+    <p class="disclaimer">${DISCLAIMER}</p>
+  </section>`;
+}
+
+/* ===== 詳細 ===== */
+function openDetail(id) {
+  const ev = S.events.find(x => x.eventId === id);
+  const p = S.posts.find(x => x.postId === id);
+  const body = $('#detailBody');
+  body.innerHTML = ev ? eventDetail(ev) : postDetail(p);
+  bindDetail(ev, p);
+  if (!$('#dlgDetail').open) $('#dlgDetail').showModal();
+}
+
+function detailHeader(imageUrl, cat) {
+  return `<div class="relative">
+    ${imageUrl ? `<img src="${esc(imageUrl)}" alt="" referrerpolicy="no-referrer" class="w-full max-h-80 object-cover rounded-t-[20px] border-b-2 border-ink">`
+      : `<div class="h-28 rounded-t-[20px] border-b-2 border-ink flex items-center justify-center text-[56px]" style="background:${cat.color}22">${cat.icon}</div>`}
+    <button class="btn btn-sub !min-h-[44px] !px-4 absolute right-3 top-3" data-close>閉じる</button>
+  </div>`;
+}
+
+function eventDetail(ev) {
+  const c = EVENT_CATS[ev.category] || EVENT_CATS.marche;
+  const slots = ev.slots.map(s => {
+    const full = s.count >= s.capacity && !s.mine;
+    return `<li class="flex items-center justify-between gap-3 p-3 rounded-xl border-2 border-ink/30 bg-white">
+      <div><p class="font-bold">${esc(s.label)}</p>
+        <p class="text-[15px]">${s.count} / ${s.capacity}人${s.memberNames.length ? '：' + s.memberNames.map(esc).join('、') : ''}</p></div>
+      <button class="btn ${s.mine ? 'btn-sub' : 'btn-leaf'} !min-h-[48px] shrink-0" data-slot="${esc(s.id)}" ${full ? 'disabled' : ''}>${s.mine ? '取り消す' : full ? '満員' : '引き受ける'}</button>
+    </li>`;
+  }).join('');
+  return `${detailHeader(ev.imageUrl, c)}
+  <div class="p-5 sm:p-7 space-y-5">
+    <div>
+      <span class="inline-block px-3 py-0.5 rounded-full text-white font-bold" style="background:${c.color}">${c.icon} ${c.label}</span>
+      <h2 class="font-hand text-[28px] leading-snug mt-2">${esc(ev.title)}</h2>
+      <p class="text-[15px]">主催：${esc(ev.organizer.nickname)} さん</p>
+    </div>
+    <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[18px]">
+      <dt>🕙</dt><dd class="font-bold">${esc(fmtDate(ev.datetime))}</dd>
+      <dt>📍</dt><dd class="font-bold">${esc(ev.place)}${ev.area ? `（${esc(ev.area)}）` : ''}
+        <a class="underline text-indigo2 text-[15px] ml-1" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.place + ' ' + (ev.area || ''))}">地図で見る</a></dd>
+    </dl>
+    <div class="leading-8">${nl2br(ev.detail)}</div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <button id="btnLike" class="btn ${ev.liked ? 'btn-main' : 'btn-sub'} !min-h-[64px] text-[18px]" aria-pressed="${ev.liked}">👍 楽しそう！<span class="count-pop" id="likeCnt">${ev.likeCount}</span></button>
+      <button id="btnJoin" class="btn ${ev.joined ? 'btn-leaf' : 'btn-sub'} !min-h-[64px] text-[18px]" aria-pressed="${ev.joined}">🙋 ${ev.joined ? '参加します（済）' : '参加します！'}<span class="count-pop" id="joinCnt">${ev.joinCount}</span></button>
+    </div>
+    <p class="text-center text-[15px] -mt-2">いま <b>${ev.joinCount}人</b> が参加予定です</p>
+    ${(ev.joined || ev.isOwner) ? `<button id="btnMembers" class="btn btn-sub w-full">👥 参加予定の人を見る</button><div id="members"></div>` : ''}
+
+    ${ev.slots.length ? `<section class="space-y-2"><h4 class="font-hand text-[20px]">🧺 持ち寄り・出店の募集</h4><ul class="space-y-2">${slots}</ul></section>` : ''}
+
+    ${contactPanel(ev.contacts, '主催者')}
+
+    ${ev.isOwner ? `<div class="flex gap-2 pt-3 border-t-2 border-dashed border-ink/30">
+      <button id="btnEdit" class="btn btn-sub flex-1">✏️ 編集する</button>
+      <button id="btnDel" class="btn btn-sub flex-1 text-terra">🗑 削除する</button></div>` : ''}
+  </div>`;
+}
+
+function postDetail(p) {
+  const c = POST_CATS[p.category] || POST_CATS.barter;
+  const st = POST_STATUS[p.status] || POST_STATUS.open;
+  const isHelp = p.category === 'help';
+  return `${detailHeader(p.imageUrl, c)}
+  <div class="p-5 sm:p-7 space-y-5">
+    <div class="space-y-2">
+      <div class="flex items-center gap-2 flex-wrap"><span class="tag">${c.icon} ${c.label}</span><span class="px-3 rounded-full font-bold ${st.cls}">${st.label}</span></div>
+      <h2 class="font-hand text-[28px] leading-snug">${esc(p.title)}</h2>
+      <p class="text-[15px]">🙂 ${esc(p.owner.nickname)} さん ${p.area ? `／📍${esc(p.area)}` : ''}／${esc(fmtDate(p.createdAt))} 投稿</p>
+    </div>
+    <div class="leading-8">${nl2br(p.detail)}</div>
+
+    ${!p.isOwner && p.status !== 'done' ? `<section class="space-y-2">
+      ${p.requested ? '' : `<label class="label" for="reqNote">ひとこと（任意）</label><textarea id="reqNote" class="field !min-h-[80px]" maxlength="300" placeholder="例：土曜の午前に取りに行けます"></textarea>`}
+      <button id="btnReq" class="btn ${p.requested ? 'btn-sub' : 'btn-main'} w-full !min-h-[64px] text-[18px]">${p.requested ? '申込を取り消す' : (isHelp ? '🙋 手伝えます！' : '🙋 ほしい！申し込む')}</button>
+      <p class="text-[15px] text-center">申し込むと投稿者にメールで知らせが届きます。そのあとは下の連絡先でやりとりしてください。</p>
+    </section>` : ''}
+
+    ${p.isOwner ? `<section class="space-y-3">
+      <h4 class="font-hand text-[20px]">状態を変える</h4>
+      <div class="flex gap-2 flex-wrap">${Object.entries(POST_STATUS).map(([k, s]) => `<button class="chip" data-status="${k}" aria-pressed="${p.status === k}">${s.label}</button>`).join('')}</div>
+      <h4 class="font-hand text-[20px] pt-2">🙋 申し込んだ人（${p.requesters.length}人）</h4>
+      ${p.requesters.length ? `<ul class="space-y-2">${p.requesters.map(r => `<li class="p-3 rounded-xl border-2 border-ink/30 bg-white"><b>${esc(r.nickname)}</b> さん <span class="text-[14px]">${esc(fmtDate(r.createdAt))}</span>${r.note ? `<br>「${esc(r.note)}」` : ''}</li>`).join('')}</ul>` : '<p>まだ申込はありません。</p>'}
+    </section>` : ''}
+
+    ${contactPanel(p.contacts, '投稿者')}
+
+    ${p.isOwner ? `<div class="flex gap-2 pt-3 border-t-2 border-dashed border-ink/30">
+      <button id="btnEdit" class="btn btn-sub flex-1">✏️ 編集する</button>
+      <button id="btnDel" class="btn btn-sub flex-1 text-terra">🗑 削除する</button></div>` : ''}
+  </div>`;
+}
+
+function bump(el) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+
+function bindDetail(ev, p) {
+  const body = $('#detailBody');
+  $$('[data-copy]', body).forEach(b => b.onclick = () => copyText(b.dataset.copy));
+
+  if (ev) {
+    const react = async (action, btn, key, cntKey, flag) => {
+      if (needLogin()) return;
+      setBusy(btn, true, '⏳');
+      try {
+        const r = await api(action, { eventId: ev.eventId });
+        ev[flag] = r.active; ev[cntKey] = r.count;
+        openDetail(ev.eventId);
+        bump($(key));
+        if (action === 'toggleJoin' && r.active) toast('参加表明しました！主催者に通知しました');
+        render();
+      } catch (err) { toast(err.message, false); setBusy(btn, false); }
+    };
+    $('#btnLike').onclick = e => react('toggleLike', e.currentTarget, '#likeCnt', 'likeCount', 'liked');
+    $('#btnJoin').onclick = e => react('toggleJoin', e.currentTarget, '#joinCnt', 'joinCount', 'joined');
+
+    $$('[data-slot]', body).forEach(b => b.onclick = async () => {
+      if (needLogin()) return;
+      setBusy(b, true, '⏳');
+      try {
+        const r = await api('toggleSlot', { eventId: ev.eventId, slotId: b.dataset.slot });
+        toast(r.active ? '引き受けました。ありがとうございます！' : '取り消しました');
+        await refreshAndReopen(ev.eventId);
+      } catch (err) { toast(err.message, false); setBusy(b, false); }
+    });
+
+    const mb = $('#btnMembers');
+    if (mb) mb.onclick = async () => {
+      setBusy(mb, true, '⏳');
+      try {
+        const r = await api('eventMembers', { eventId: ev.eventId });
+        $('#members').innerHTML = r.members.length
+          ? `<ul class="mt-2 flex flex-wrap gap-2">${r.members.map(m => `<li class="px-3 py-1 rounded-full bg-leaf-soft border-2 border-ink/30">${esc(m.nickname)}${m.area ? `（${esc(m.area)}）` : ''}</li>`).join('')}</ul>`
+          : '<p class="mt-2">まだ参加予定の人はいません。</p>';
+        mb.remove();
+      } catch (err) { toast(err.message, false); setBusy(mb, false); }
+    };
+  }
+
+  if (p) {
+    const rb = $('#btnReq');
+    if (rb) rb.onclick = async () => {
+      if (needLogin()) return;
+      setBusy(rb, true);
+      try {
+        const r = await api('requestPost', { postId: p.postId, note: $('#reqNote')?.value || '' });
+        toast(r.active ? '申し込みました。投稿者に通知しました' : '申込を取り消しました');
+        await refreshAndReopen(p.postId);
+      } catch (err) { toast(err.message, false); setBusy(rb, false); }
+    };
+    $$('[data-status]', body).forEach(b => b.onclick = async () => {
+      try {
+        await api('updatePost', { postId: p.postId, data: { status: b.dataset.status } });
+        toast('「' + POST_STATUS[b.dataset.status].label + '」にしました');
+        await refreshAndReopen(p.postId);
+      } catch (err) { toast(err.message, false); }
+    });
+  }
+
+  const ed = $('#btnEdit');
+  if (ed) ed.onclick = () => { $('#dlgDetail').close(); openForm(ev || p); };
+  const del = $('#btnDel');
+  if (del) del.onclick = async () => {
+    if (!confirm('この投稿を削除します。元に戻せません。よろしいですか？')) return;
+    setBusy(del, true);
+    try {
+      await api(ev ? 'deleteEvent' : 'deletePost', ev ? { eventId: ev.eventId } : { postId: p.postId });
+      $('#dlgDetail').close(); toast('削除しました'); loadAll();
+    } catch (err) { toast(err.message, false); setBusy(del, false); }
+  };
+}
+
+async function refreshAndReopen(id) {
+  const [e, p] = await Promise.all([api('listEvents'), api('listPosts')]);
+  S.events = e.events; S.posts = p.posts;
+  render(); openDetail(id);
+}
+
+/* ===== 投稿フォーム ===== */
+$('#fab').onclick = () => openForm();
+
+function contactFields(c = {}) {
+  return `<fieldset class="space-y-3 p-4 rounded-2xl border-2 border-ink/30 bg-white">
+    <legend class="font-hand text-[20px] px-2">📞 連絡・顔合わせの方法（使うものだけ）</legend>
+    <p class="text-[15px]">ログインした会員にだけ表示されます。</p>
+    ${linkInput('cZoom', '🔵 Zoom のミーティングURL', c.zoom, 'https://zoom.us/j/...')}
+    <div><label class="label" for="cMeet">🟢 Google Meet のURL</label>
+      <div class="flex gap-2"><input id="cMeet" class="field" type="url" value="${esc(c.meet || '')}" placeholder="https://meet.google.com/...">
+        <button type="button" class="copy-btn shrink-0" id="meetNew">新しく<br>作る</button></div>
+      <p class="text-[14px] mt-1">「新しく作る」でMeetが開きます。表示されたリンクをコピーして、下の「貼り付け」を押してください。</p>
+      <button type="button" class="chip mt-1" data-paste="cMeet">📋 貼り付け</button></div>
+    ${linkInput('cLine', '🟢 LINE 友だち追加URL', c.line, 'https://line.me/ti/p/...')}
+    ${linkInput('cFb', '🔵 Facebook グループ・Messenger URL', c.facebook, 'https://www.facebook.com/...')}
+    <div><label class="label" for="cEmail">✉️ 連絡用メール</label><input id="cEmail" class="field" type="email" value="${esc(c.email || '')}"></div>
+    <div><label class="label" for="cPhone">📞 電話番号</label><input id="cPhone" class="field" type="tel" value="${esc(c.phone || '')}"></div>
+    <p class="disclaimer">${DISCLAIMER}</p>
+  </fieldset>`;
+}
+function linkInput(id, label, val, ph) {
+  return `<div><label class="label" for="${id}">${label}</label>
+    <div class="flex gap-2"><input id="${id}" class="field" type="url" value="${esc(val || '')}" placeholder="${ph}">
+    <button type="button" class="copy-btn shrink-0" data-paste="${id}">📋<br>貼付</button></div></div>`;
+}
+
+function slotRow(s = {}) {
+  return `<div class="flex gap-2 items-center" data-slotrow data-id="${esc(s.id || '')}">
+    <input class="field flex-1" placeholder="例：野菜の出店者" value="${esc(s.label || '')}" aria-label="募集する内容">
+    <input class="field !w-24" type="number" min="1" max="99" value="${s.capacity || 1}" aria-label="人数">
+    <span>人</span>
+    <button type="button" class="copy-btn shrink-0" data-delslot aria-label="この枠を消す">✕</button>
+  </div>`;
+}
+
+function openForm(item) {
+  if (needLogin()) return;
+  const isEvent = item ? !!item.eventId : S.tab === 'events';
+  const editing = !!item;
+  const cats = isEvent ? EVENT_CATS : POST_CATS;
+  const it = item || {};
+  S.pendingImage = null;
+  const f = $('#fItem');
+  f.dataset.kind = isEvent ? 'event' : 'post';
+  f.dataset.id = editing ? (it.eventId || it.postId) : '';
+  f.dataset.imageUrl = it.imageUrl || '';
+
+  f.innerHTML = `
+    <div class="flex justify-between items-start">
+      <h2 class="font-hand text-[26px]">${editing ? '✏️ 内容を直す' : isEvent ? '🎪 催しを告知する' : '🎁 出品・お願いする'}</h2>
+      <button type="button" class="btn btn-sub !min-h-[44px] !px-4" data-close>閉じる</button>
+    </div>
+    <fieldset><legend class="label">種類</legend>
+      <div class="grid grid-cols-2 gap-2">${Object.entries(cats).map(([k, c]) => `
+        <label class="chip flex items-center gap-2 cursor-pointer !rounded-2xl !min-h-[56px]">
+          <input type="radio" name="cat" value="${k}" class="w-5 h-5" ${it.category === k ? 'checked' : ''}> ${c.icon} ${c.label}</label>`).join('')}</div>
+    </fieldset>
+    <div><label class="label" for="fTitle">タイトル</label><input id="fTitle" class="field" maxlength="60" value="${esc(it.title || '')}" placeholder="${isEvent ? '例：秋の朝どれ野菜マルシェ' : '例：大根がたくさん採れました'}"></div>
+    ${isEvent ? `
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div><label class="label" for="fDate">日時</label><input id="fDate" class="field" type="datetime-local" value="${esc(it.datetime ? toLocalInput(it.datetime) : '')}"></div>
+        <div><label class="label" for="fPlace">開催場所</label><input id="fPlace" class="field" maxlength="100" value="${esc(it.place || '')}" placeholder="例：みどり町公民館 前庭"></div>
+      </div>` : ''}
+    <div><label class="label" for="fArea">地域</label><input id="fArea" class="field" maxlength="50" value="${esc(it.area || S.user.area)}"></div>
+    <div><label class="label" for="fDetail">${isEvent ? '案内文' : 'くわしく'}</label>
+      <textarea id="fDetail" class="field" maxlength="3000" placeholder="${isEvent ? '内容・持ち物・雨天の場合など' : '量・受け渡し場所・時間帯など'}">${esc(it.detail || '')}</textarea>
+      <div class="mt-2 p-3 rounded-2xl bg-amber/20 border-2 border-amber-deep/40">
+        <button type="button" id="aiBtn" class="btn btn-sub w-full">✨ AIに${isEvent ? 'チラシ風の告知文' : '紹介文'}を書いてもらう</button>
+        <p class="text-[14px] mt-1">種類・タイトル・${isEvent ? '日時・場所' : 'メモ'}を入れてから押すと、下書きを作ります。内容は必ず確かめてください。</p>
+        <div id="aiOut"></div>
+      </div>
+    </div>
+    <div><span class="label">写真・チラシ画像（1枚）</span>
+      <div id="imgPrev" class="mb-2">${it.imageUrl ? `<img src="${esc(it.imageUrl)}" referrerpolicy="no-referrer" class="max-h-48 rounded-xl border-2 border-ink" alt="">` : ''}</div>
+      <div class="flex gap-2 flex-wrap">
+        <label class="btn btn-sub cursor-pointer">📷 写真を選ぶ<input id="fImg" type="file" accept="image/*" class="sr-only"></label>
+        ${it.imageUrl ? `<button type="button" id="imgRemove" class="btn btn-sub">写真をはずす</button>` : ''}
+      </div></div>
+    ${isEvent ? `
+      <fieldset class="space-y-2 p-4 rounded-2xl border-2 border-ink/30 bg-white">
+        <legend class="font-hand text-[20px] px-2">🧺 持ち寄り・出店の募集（任意）</legend>
+        <div id="slotList" class="space-y-2">${(it.slots || []).map(slotRow).join('')}</div>
+        <button type="button" id="addSlot" class="btn btn-sub w-full">＋ 募集枠を足す</button>
+      </fieldset>` : ''}
+    ${contactFields(it.contacts || {})}
+    <button class="btn btn-main w-full !min-h-[60px] text-[19px]">${editing ? '保存する' : isEvent ? '告知する' : '投稿する'}</button>
+  `;
+
+  // 画像
+  $('#fImg').onchange = async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      S.pendingImage = await resizeImage(file, 1280, 0.82);
+      $('#imgPrev').innerHTML = `<img src="${S.pendingImage}" class="max-h-48 rounded-xl border-2 border-ink" alt="選んだ写真">`;
+    } catch { toast('写真を読み込めませんでした', false); }
+  };
+  const rm = $('#imgRemove');
+  if (rm) rm.onclick = () => { f.dataset.imageUrl = ''; S.pendingImage = null; $('#imgPrev').innerHTML = ''; rm.remove(); };
+
+  // 募集枠
+  const addSlot = $('#addSlot');
+  if (addSlot) addSlot.onclick = () => $('#slotList').insertAdjacentHTML('beforeend', slotRow());
+  f.onclick = e => { const d = e.target.closest('[data-delslot]'); if (d) d.closest('[data-slotrow]').remove(); };
+
+  // 貼り付け・Meet
+  $$('[data-paste]', f).forEach(b => b.onclick = async () => {
+    try { $('#' + b.dataset.paste).value = (await navigator.clipboard.readText()).trim(); toast('貼り付けました'); }
+    catch { toast('貼り付けできませんでした。入力欄を長押しして貼り付けてください', false); }
+  });
+  $('#meetNew').onclick = () => window.open('https://meet.google.com/new', '_blank', 'noopener');
+
+  // AI
+  $('#aiBtn').onclick = () => runAI(isEvent);
+
+  f.onsubmit = submitForm;
+  $('#dlgForm').showModal();
+}
+
+function resizeImage(file, max, quality) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      const cv = document.createElement('canvas');
+      cv.width = Math.round(img.width * scale); cv.height = Math.round(img.height * scale);
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      URL.revokeObjectURL(url);
+      resolve(cv.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
+function collectForm() {
+  const f = $('#fItem');
+  const isEvent = f.dataset.kind === 'event';
+  const cat = $('input[name="cat"]:checked', f)?.value || '';
+  const data = {
+    category: cat,
+    title: $('#fTitle').value.trim(),
+    detail: $('#fDetail').value.trim(),
+    area: $('#fArea').value.trim(),
+    contacts: {
+      zoom: $('#cZoom').value.trim(), meet: $('#cMeet').value.trim(), line: $('#cLine').value.trim(),
+      facebook: $('#cFb').value.trim(), email: $('#cEmail').value.trim(), phone: $('#cPhone').value.trim()
+    }
+  };
+  if (isEvent) {
+    const v = $('#fDate').value;
+    data.datetime = v ? new Date(v).toISOString() : '';   // 端末の時刻（日本時間）として送る
+    data.place = $('#fPlace').value.trim();
+    data.slots = $$('[data-slotrow]', f).map(r => {
+      const [l, n] = $$('input', r);
+      return { id: r.dataset.id || undefined, label: l.value.trim(), capacity: Number(n.value) || 1 };
+    }).filter(s => s.label);
+  }
+  return { isEvent, data };
+}
+
+async function runAI(isEvent) {
+  const btn = $('#aiBtn');
+  const { data } = collectForm();
+  const cats = isEvent ? EVENT_CATS : POST_CATS;
+  if (!data.category) return toast('先に種類を選んでください', false);
+  setBusy(btn, true, '✨ 考えています…');
+  try {
+    const r = await api('aiWrite', {
+      kind: isEvent ? 'event' : 'post',
+      data: {
+        ...data,
+        categoryLabel: cats[data.category].label,
+        datetimeText: data.datetime ? fmtDate(data.datetime) : '',
+        slotsText: (data.slots || []).map(s => `${s.label} ${s.capacity}人`).join('、')
+      }
+    });
+    $('#aiOut').innerHTML = `<div class="mt-3 p-3 rounded-xl bg-paper border-2 border-ink">
+      <p class="font-hand text-[22px]">${esc(r.catchcopy)}</p>
+      <p class="font-bold mt-1">${esc(r.title)}</p>
+      <p class="mt-2 leading-8">${nl2br(r.body)}</p>
+      <div class="flex gap-2 mt-3 flex-wrap">
+        <button type="button" class="btn btn-leaf flex-1" id="aiUse">この文章を使う</button>
+        <button type="button" class="btn btn-sub" id="aiRetry">もう一度</button>
+      </div></div>`;
+    $('#aiUse').onclick = () => {
+      $('#fTitle').value = r.title || $('#fTitle').value;
+      $('#fDetail').value = (r.catchcopy ? r.catchcopy + '\n\n' : '') + r.body;
+      $('#aiOut').innerHTML = '';
+      toast('文章を入れました。直したいところは自由に直してください');
+    };
+    $('#aiRetry').onclick = () => runAI(isEvent);
+  } catch (err) { toast(err.message, false); }
+  finally { setBusy(btn, false); }
+}
+
+async function submitForm(e) {
+  e.preventDefault();
+  const f = $('#fItem');
+  const { isEvent, data } = collectForm();
+  if (!data.category) return toast('種類を選んでください', false);
+  if (!data.title) return toast('タイトルを入力してください', false);
+  if (isEvent && !data.datetime) return toast('日時を入力してください', false);
+  if (isEvent && !data.place) return toast('開催場所を入力してください', false);
+
+  const btn = e.submitter;
+  setBusy(btn, true);
+  try {
+    data.imageUrl = f.dataset.imageUrl || '';
+    if (S.pendingImage) {
+      btn.innerHTML = '⏳ 写真を送っています…';
+      const up = await api('uploadImage', { dataUrl: S.pendingImage });
+      data.imageUrl = up.imageUrl;
+    }
+    btn.innerHTML = '⏳ 保存しています…';
+    const id = f.dataset.id;
+    if (isEvent) await api(id ? 'updateEvent' : 'createEvent', id ? { eventId: id, data } : { data });
+    else await api(id ? 'updatePost' : 'createPost', id ? { postId: id, data } : { data });
+    $('#dlgForm').close();
+    toast(id ? '保存しました' : isEvent ? '告知しました！🎉' : '投稿しました！');
+    // 投稿したタブに切り替え
+    const tabBtn = $(isEvent ? '#tab-events' : '#tab-posts');
+    if (tabBtn.getAttribute('aria-selected') !== 'true') tabBtn.click();
+    loadAll();
+  } catch (err) { toast(err.message, false); }
+  finally { setBusy(btn, false); }
+}
+
+/* ===== 起動 ===== */
+(async function init() {
+  renderUser();
+  if (S.token) {
+    try {
+      const r = await api('me');
+      saveSession(S.token, r.user);
+      renderUser();
+      if (r.user.isTemp) openPwDialog(true);
+    } catch { /* 期限切れは api() 内で処理 */ }
+  }
+  loadAll();
+})();
+</script>
+</body>
+</html>
