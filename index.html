@@ -10,6 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Yusei+Magic&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
 tailwind.config = {
@@ -110,8 +112,8 @@ tailwind.config = {
   .disclaimer { background: #FFF3C8; border: 2px dashed #B97A06; border-radius: 12px; padding: 12px 14px; font-size: 15px; }
   .contact-btn { min-height: 56px; border-radius: 14px; border: 2px solid #3A2817; font-weight: 700; display: flex; align-items: center; gap: .5em; padding: 0 14px; color: #fff; }
   .copy-btn { min-height: 56px; min-width: 56px; border-radius: 14px; border: 2px solid #3A2817; background: #FFF9EC; font-weight: 700; padding: 0 10px; font-size: 15px; }
-  .fab { position: fixed; right: 16px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 30; min-height: 64px; font-size: 18px; padding: 0 24px; }
-  #toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 60; }
+  .fab { position: fixed; right: 16px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 1100; min-height: 64px; font-size: 18px; padding: 0 24px; }
+  #toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 1200; }
   .count-pop { display: inline-block; }
   @media (prefers-reduced-motion: no-preference) {
     .count-pop.bump { animation: bump .45s ease; }
@@ -119,6 +121,30 @@ tailwind.config = {
   }
   .clamp3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
   .scroll-x { overflow-x: auto; scrollbar-width: thin; }
+
+  /* 地図 */
+  .leaflet-container img.leaflet-tile, .leaflet-container img.leaflet-marker-icon { max-width: none !important; max-height: none !important; }
+  .leaflet-container { font-family: inherit; font-size: 16px; }
+  #mainMap { height: min(68vh, 620px); border: 2px solid #3A2817; border-radius: 18px; box-shadow: 4px 5px 0 #3A2817; }
+  .mini-map { height: 220px; border: 2px solid #3A2817; border-radius: 14px; }
+  #pickMap { height: min(55vh, 460px); border: 2px solid #3A2817; border-radius: 14px; }
+  .pin { width: 42px; height: 42px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: var(--c); border: 3px solid #3A2817;
+         display: flex; align-items: center; justify-content: center; box-shadow: 2px 3px 0 rgba(58,40,23,.5); }
+  .pin span { transform: rotate(45deg); font-size: 20px; line-height: 1; }
+  .pin.post { border-style: dashed; }
+  .me-pin { width: 26px; height: 26px; border-radius: 50%; background: #2F6BE0; border: 4px solid #fff; box-shadow: 0 0 0 3px #2F6BE0; }
+  @media (prefers-reduced-motion: no-preference) {
+    .me-pin { animation: mepulse 2s ease-out infinite; }
+    @keyframes mepulse { 0% { box-shadow: 0 0 0 3px #2F6BE0, 0 0 0 0 rgba(47,107,224,.5); } 100% { box-shadow: 0 0 0 3px #2F6BE0, 0 0 0 18px rgba(47,107,224,0); } }
+  }
+  .me-label { background: #2F6BE0; color: #fff; font-weight: 700; padding: 0 8px; border-radius: 999px; font-size: 14px; white-space: nowrap; }
+  .st-pin { background: #fff; border: 2px solid #3A2817; border-radius: 10px; padding: 0 6px; font-weight: 700; font-size: 14px; white-space: nowrap; }
+  .leaflet-popup-content { margin: 12px 14px; line-height: 1.6; }
+  .dist-badge { display: inline-flex; align-items: center; gap: .3em; padding: 0 10px; border-radius: 999px; font-weight: 700; font-size: 15px; border: 2px solid #3A2817; }
+  .lv-walk { background: #D3ECDF; } .lv-bike { background: #FFF0C2; } .lv-car { background: #F6D9C8; } .lv-far { background: #EDE6DA; }
+  .viewbtn { min-height: 48px; padding: 0 16px; border: 2px solid #3A2817; background: #FFF9EC; font-weight: 700; }
+  .viewbtn[aria-pressed="true"] { background: #3A2817; color: #FFF9EC; }
+  .viewbtn:first-child { border-radius: 999px 0 0 999px; } .viewbtn:last-child { border-radius: 0 999px 999px 0; border-left: 0; }
 </style>
 </head>
 <body class="min-h-screen pb-28">
@@ -144,20 +170,43 @@ tailwind.config = {
     <button class="tabbtn" role="tab" id="tab-posts" aria-selected="false" aria-controls="panel" data-tab="posts">🎁 おすそ分け・助け合い</button>
   </div>
 
+  <!-- 基準の場所 -->
+  <section id="baseBar" class="mt-4 p-4 rounded-2xl border-2 border-ink bg-paper" aria-label="基準の場所">
+    <div class="flex items-start justify-between gap-3 flex-wrap">
+      <div>
+        <p class="font-bold">📍 <span id="baseLabel">基準の場所が決まっていません</span></p>
+        <p id="stationLine" class="text-[15px]">場所を決めると「徒歩10分以内」などで探せます。</p>
+      </div>
+      <div class="flex gap-2 flex-wrap">
+        <button id="btnGps" class="btn btn-leaf !min-h-[48px]">📡 現在地を使う</button>
+        <button id="btnPickBase" class="btn btn-sub !min-h-[48px]">🗺 地図で選ぶ</button>
+      </div>
+    </div>
+  </section>
+
   <!-- 絞り込み -->
   <section class="mt-4 space-y-3" aria-label="絞り込み">
     <div class="flex gap-2 scroll-x pb-1" id="chips"></div>
+    <div class="flex gap-2 scroll-x pb-1" id="distChips" aria-label="近さで絞り込む"></div>
     <div class="flex gap-2 flex-wrap items-center">
       <label class="sr-only" for="q">キーワードで探す</label>
       <input id="q" class="field flex-1 min-w-[200px]" type="search" placeholder="🔍 キーワード（例：野菜、公民館）">
-      <label class="chip flex items-center gap-2 cursor-pointer" id="myAreaWrap">
-        <input type="checkbox" id="myArea" class="w-5 h-5 accent-[#1E7A57]"> わたしの地域だけ
-      </label>
+      <label class="sr-only" for="sort">並び順</label>
+      <select id="sort" class="field !w-auto"></select>
+      <div class="flex" role="group" aria-label="表示方法">
+        <button class="viewbtn" data-view="list" aria-pressed="true">📋 一覧</button>
+        <button class="viewbtn" data-view="map" aria-pressed="false">🗺 地図</button>
+      </div>
     </div>
+    <p id="filterNote" class="text-[15px] hidden"></p>
   </section>
 
   <section id="panel" role="tabpanel" aria-live="polite" class="mt-5">
     <div id="list" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"></div>
+    <div id="mapWrap" class="hidden">
+      <div id="mainMap" role="application" aria-label="催し・投稿の地図"></div>
+      <p class="text-[15px] mt-2">🔵 あなたの基準の場所　📍 催し・投稿（おすそ分けは約100mぼかした目安の場所です）</p>
+    </div>
   </section>
 
   <p class="disclaimer mt-8">⚠️ 当サイトは地域コミュニティの広場です。実際の受け渡し、対面交流、外部ツールでの連絡・通話は、当事者同士の自己責任のもと安全に行ってください。</p>
@@ -190,7 +239,8 @@ tailwind.config = {
     <form id="fRegister" class="mt-5 space-y-4 hidden" data-authform="register">
       <div><label class="label" for="rgEmail">メールアドレス</label><input id="rgEmail" class="field" type="email" autocomplete="email" required></div>
       <div><label class="label" for="rgNick">ニックネーム（ほかの人に表示されます）</label><input id="rgNick" class="field" maxlength="30" required placeholder="例：みどり町のたけさん"></div>
-      <div><label class="label" for="rgArea">地域（町名・地区など）</label><input id="rgArea" class="field" maxlength="50" required placeholder="例：みどり町3丁目"></div>
+      <div><label class="label" for="rgArea">地域（町名・地区など）</label><input id="rgArea" class="field" maxlength="50" required placeholder="例：川崎市中原区 小杉町">
+        <p class="text-[14px] mt-1">市区町村から書くと、地図の位置が正確になります。</p></div>
       <p class="text-[15px]">登録すると、仮パスワードがメールで届きます。迷惑メールフォルダもご確認ください。</p>
       <button class="btn btn-leaf w-full text-[18px]">仮パスワードを受け取る</button>
     </form>
@@ -240,14 +290,35 @@ tailwind.config = {
     </div>
     <p id="meEmail" class="text-[15px]"></p>
     <div><label class="label" for="meNick">ニックネーム</label><input id="meNick" class="field" maxlength="30" required></div>
-    <div><label class="label" for="meArea">地域</label><input id="meArea" class="field" maxlength="50" required></div>
+    <div><label class="label" for="meArea">地域（市区町村から）</label><input id="meArea" class="field" maxlength="50" required></div>
     <button class="btn btn-leaf w-full">保存する</button>
+    <button type="button" id="meLoc" class="btn btn-sub w-full">🗺 地図で自分の地域の位置を決める</button>
+    <p class="text-[14px]">位置は約100m単位で保存し、ほかの人には表示しません。距離の計算に使います。</p>
     <div class="flex gap-2 flex-wrap pt-2 border-t-2 border-dashed border-ink/30">
       <button type="button" id="meMine" class="btn btn-sub flex-1">自分の投稿を見る</button>
       <button type="button" id="mePw" class="btn btn-sub flex-1">パスワードを変える</button>
       <button type="button" id="meLogout" class="btn btn-sub flex-1">ログアウト</button>
     </div>
   </form>
+</dialog>
+
+<!-- ===== 地図で場所を選ぶ ===== -->
+<dialog id="dlgPick" aria-labelledby="pickTitle">
+  <div class="sheet p-4 sm:p-6 space-y-3">
+    <div class="flex justify-between items-start">
+      <h2 id="pickTitle" class="font-hand text-[24px]">地図で場所を選ぶ</h2>
+      <button type="button" class="btn btn-sub !min-h-[44px] !px-4" data-close>閉じる</button>
+    </div>
+    <div id="pickSearch" class="flex gap-2">
+      <label class="sr-only" for="pickQ">住所・場所の名前</label>
+      <input id="pickQ" class="field" placeholder="住所・場所の名前（例：中原区役所）">
+      <button type="button" id="pickGo" class="btn btn-sub shrink-0">探す</button>
+    </div>
+    <p class="text-[15px]">地図をタップするか、ピンを動かして場所を決めてください。</p>
+    <div id="pickMap"></div>
+    <label id="pickSaveWrap" class="flex items-center gap-2 font-bold hidden"><input type="checkbox" id="pickSave" class="w-5 h-5" checked> 自分の地域の位置としても保存する</label>
+    <button type="button" id="pickOk" class="btn btn-main w-full" disabled>この場所にする</button>
+  </div>
 </dialog>
 
 <script src="config.js"></script>
@@ -275,6 +346,15 @@ const POST_STATUS = {
   talking: { label: '相談中', cls: 'bg-amber text-ink' },
   done:    { label: '受け渡し済み', cls: 'bg-ink/60 text-white' }
 };
+/* 近さの目安：直線距離×1.3を道のりとし、徒歩80m/分・自転車250m/分・車400m/分（街なか）で計算 */
+const ROAD = 1.3;
+const SPEED = { walk: 80, bike: 250, car: 400 };
+const DIST = {
+  walk: { icon: '🚶', name: 'すぐ近く', sub: '徒歩10分以内', mode: '徒歩', max: 800 / ROAD },
+  bike: { icon: '🚲', name: '近場', sub: '自転車10分以内', mode: '自転車', max: 2500 / ROAD },
+  car:  { icon: '🚗', name: 'やや近場', sub: '車10分以内', mode: '車', max: 4000 / ROAD }
+};
+const DEFAULT_CENTER = [35.681, 139.767];
 const DISCLAIMER = '※当サイトは地域コミュニティの広場です。実際の受け渡し、対面交流、外部ツールでの連絡・通話は、当事者同士の自己責任のもと安全に行ってください。';
 
 /* ===== 状態 ===== */
@@ -286,7 +366,12 @@ const S = {
   events: [],
   posts: [],
   onlyMine: false,
-  pendingImage: null
+  pendingImage: null,
+  base: JSON.parse(localStorage.getItem('gm_base') || 'null'),  // {lat, lng, label, src}
+  stations: [],
+  dist: 'all',
+  sort: 'default',
+  view: 'list'
 };
 
 /* ===== ユーティリティ ===== */
@@ -306,6 +391,37 @@ function toLocalInput(iso) {
   if (isNaN(d)) return '';
   const p = n => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+function haversine(a, b) {
+  const R = 6371000, r = Math.PI / 180;
+  const dLat = (b.lat - a.lat) * r, dLng = (b.lng - a.lng) * r;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+function hasLoc(it) { return it && it.lat != null && it.lng != null; }
+function distOf(it) { return S.base && hasLoc(it) ? haversine(S.base, it) : null; }
+function minutes(d, mode) { return Math.max(1, Math.round(d * ROAD / SPEED[mode])); }
+function fmtKm(d) { return d < 1000 ? `${Math.round(d / 10) * 10}m` : `${(d / 1000).toFixed(1)}km`; }
+function levelOf(d) {
+  if (d == null) return null;
+  if (d <= DIST.walk.max) return 'walk';
+  if (d <= DIST.bike.max) return 'bike';
+  if (d <= DIST.car.max) return 'car';
+  return 'far';
+}
+function distBadge(it) {
+  const d = distOf(it);
+  if (d == null) return '';
+  const lv = levelOf(d);
+  const text = lv === 'walk' ? `🚶 すぐ近く 約${fmtKm(d)}（徒歩${minutes(d, 'walk')}分）`
+    : lv === 'bike' ? `🚲 近場 約${fmtKm(d)}（自転車${minutes(d, 'bike')}分）`
+    : lv === 'car' ? `🚗 やや近場 約${fmtKm(d)}（車${minutes(d, 'car')}分）`
+    : `🧭 遠め 約${fmtKm(d)}（車${minutes(d, 'car')}分）`;
+  return `<span class="dist-badge lv-${lv}">${text}</span>`;
+}
+function inMyStations(it) {
+  return it.station && S.stations.some(st => st.name === it.station.name);
 }
 
 function toast(msg, ok = true) {
@@ -401,7 +517,6 @@ function renderUser() {
     box.innerHTML = `<button id="btnLogin" class="btn btn-leaf">ログイン / 登録</button>`;
     $('#btnLogin').onclick = () => openAuth('login');
   }
-  $('#myAreaWrap').classList.toggle('hidden', !S.user);
 }
 
 /* ===== 認証ダイアログ ===== */
@@ -421,6 +536,7 @@ $('#fLogin').onsubmit = async e => {
     saveSession(r.token, r.user);
     $('#dlgAuth').close(); $('#liPw').value = '';
     renderUser();
+    useProfileBaseIfNone();
     if (r.user.isTemp) openPwDialog(true);
     else { toast(`おかえりなさい、${r.user.nickname}さん`); loadAll(); }
   } catch (err) { toast(err.message, false); }
@@ -517,12 +633,29 @@ $('#fMe').onsubmit = async e => {
   try {
     const r = await api('updateProfile', { nickname: $('#meNick').value.trim(), area: $('#meArea').value.trim() });
     saveSession(S.token, r.user);
+    if (!S.base || S.base.src === 'profile') { S.base = null; useProfileBaseIfNone(); }
     renderUser(); toast('保存しました');
     $('#dlgMe').close();
   } catch (err) { toast(err.message, false); }
   finally { setBusy(btn, false); }
 };
 $('#mePw').onclick = () => { $('#dlgMe').close(); openPwDialog(false); };
+$('#meLoc').onclick = () => {
+  $('#dlgMe').close();
+  openPicker({
+    title: '自分の地域の位置を決める',
+    start: hasLoc(S.user) ? S.user : S.base,
+    query: S.user.area,
+    async onPick(pt) {
+      try {
+        const r = await api('updateProfile', { lat: pt.lat, lng: pt.lng });
+        saveSession(S.token, r.user);
+        setBase({ lat: r.user.lat, lng: r.user.lng, label: `${r.user.area}（登録した地域）`, src: 'profile' });
+        toast('地域の位置を保存しました');
+      } catch (err) { toast(err.message, false); }
+    }
+  });
+};
 $('#meLogout').onclick = doLogout;
 $('#meMine').onclick = () => {
   S.onlyMine = !S.onlyMine;
@@ -537,10 +670,178 @@ $$('[data-tab]').forEach(b => b.onclick = () => {
   S.tab = b.dataset.tab; S.cat = 'all';
   $$('[data-tab]').forEach(x => x.setAttribute('aria-selected', String(x === b)));
   $('#fab').textContent = S.tab === 'events' ? '＋ 催しを告知する' : '＋ 出品・お願いする';
+  S.sort = 'default';
   render();
 });
 $('#q').addEventListener('input', () => { clearTimeout(render._t); render._t = setTimeout(render, 200); });
-$('#myArea').onchange = render;
+$('#sort').onchange = e => { S.sort = e.target.value; render(); };
+$$('[data-view]').forEach(b => b.onclick = () => {
+  S.view = b.dataset.view;
+  $$('[data-view]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  render();
+});
+
+/* ===== 基準の場所 ===== */
+function setBase(base, persist = true) {
+  S.base = base;
+  if (persist) localStorage.setItem('gm_base', JSON.stringify(base));
+  S.stations = [];
+  renderBaseBar();
+  render();
+  api('stations', { lat: base.lat, lng: base.lng })
+    .then(r => { S.stations = r.stations; renderBaseBar(); render(); })
+    .catch(() => { $('#stationLine').textContent = '最寄り駅を取得できませんでした。'; });
+}
+function useProfileBaseIfNone() {
+  if (!S.base && S.user && hasLoc(S.user)) {
+    setBase({ lat: S.user.lat, lng: S.user.lng, label: `${S.user.area}（登録した地域）`, src: 'profile' }, false);
+  }
+}
+function renderBaseBar() {
+  if (!S.base) {
+    $('#baseLabel').textContent = '基準の場所が決まっていません';
+    $('#stationLine').textContent = '場所を決めると「徒歩10分以内」などで探せます。';
+    return;
+  }
+  $('#baseLabel').textContent = '基準：' + S.base.label;
+  $('#stationLine').textContent = S.stations.length
+    ? '🚉 最寄り駅：' + S.stations.map(st => `${st.name}駅（${fmtKm(st.distance)}）`).join('・')
+    : '🚉 最寄り駅を調べています…';
+}
+$('#btnGps').onclick = () => {
+  if (!navigator.geolocation) return toast('この端末では現在地を使えません', false);
+  const btn = $('#btnGps');
+  setBusy(btn, true, '📡 確認中…');
+  navigator.geolocation.getCurrentPosition(pos => {
+    setBusy(btn, false);
+    setBase({ lat: pos.coords.latitude, lng: pos.coords.longitude, label: '現在地', src: 'gps' });
+    toast('現在地を基準にしました');
+  }, () => {
+    setBusy(btn, false);
+    toast('現在地を取得できませんでした。ブラウザの位置情報を「許可」にしてください', false);
+  }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+};
+$('#btnPickBase').onclick = () => openPicker({
+  title: '基準の場所を選ぶ',
+  start: S.base || (S.user && hasLoc(S.user) ? S.user : null),
+  query: S.user ? S.user.area : '',
+  saveOption: !!S.user,
+  async onPick(pt, saveToProfile) {
+    setBase({ lat: pt.lat, lng: pt.lng, label: '地図で選んだ場所', src: 'map' });
+    if (saveToProfile && S.user) {
+      try { const r = await api('updateProfile', { lat: pt.lat, lng: pt.lng }); saveSession(S.token, r.user); } catch {}
+    }
+  }
+});
+
+/* ===== 地図で場所を選ぶ（共通） ===== */
+let pickMap = null, pickMarker = null, pickOpts = null;
+function openPicker(opts) {
+  pickOpts = opts;
+  $('#pickTitle').textContent = opts.title || '地図で場所を選ぶ';
+  $('#pickSearch').classList.toggle('hidden', !S.user);
+  $('#pickSaveWrap').classList.toggle('hidden', !opts.saveOption);
+  $('#pickQ').value = opts.query || '';
+  $('#pickOk').disabled = true;
+  $('#dlgPick').showModal();
+  if (pickMap) { pickMap.remove(); pickMap = null; }
+  const start = opts.start && hasLoc(opts.start) ? [opts.start.lat, opts.start.lng] : null;
+  pickMap = L.map('pickMap').setView(start || DEFAULT_CENTER, start ? 16 : 11);
+  addTiles(pickMap);
+  pickMarker = null;
+  if (start) setPickPoint(start[0], start[1]);
+  pickMap.on('click', e => setPickPoint(e.latlng.lat, e.latlng.lng));
+  setTimeout(() => pickMap.invalidateSize(), 120);
+  if (!start && opts.query && S.user) pickSearch();
+}
+function setPickPoint(lat, lng) {
+  if (!pickMarker) {
+    pickMarker = L.marker([lat, lng], { draggable: true, icon: pinIcon('📍', '#B4532A') }).addTo(pickMap);
+  } else pickMarker.setLatLng([lat, lng]);
+  $('#pickOk').disabled = false;
+}
+async function pickSearch() {
+  const q = $('#pickQ').value.trim();
+  if (!q) return;
+  const btn = $('#pickGo');
+  setBusy(btn, true, '⏳');
+  try {
+    const r = await api('geocode', { address: q });
+    pickMap.setView([r.lat, r.lng], 17);
+    setPickPoint(r.lat, r.lng);
+  } catch (err) { toast(err.message, false); }
+  finally { setBusy(btn, false); }
+}
+$('#pickGo').onclick = pickSearch;
+$('#pickQ').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); pickSearch(); } });
+$('#pickOk').onclick = () => {
+  const ll = pickMarker.getLatLng();
+  const save = $('#pickSave').checked;
+  $('#dlgPick').close();
+  pickOpts.onPick({ lat: ll.lat, lng: ll.lng }, save);
+};
+$('#dlgPick').addEventListener('close', () => { if (pickMap) { pickMap.remove(); pickMap = null; } });
+
+/* ===== 地図の部品 ===== */
+function addTiles(map) {
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+}
+function pinIcon(icon, color, isPost) {
+  return L.divIcon({ className: '', html: `<div class="pin ${isPost ? 'post' : ''}" style="--c:${color}"><span>${icon}</span></div>`, iconSize: [42, 42], iconAnchor: [21, 44], popupAnchor: [0, -40] });
+}
+function meIcon() {
+  return L.divIcon({ className: '', html: '<div style="display:flex;flex-direction:column;align-items:center;gap:2px"><div class="me-pin"></div><div class="me-label">あなた</div></div>', iconSize: [60, 50], iconAnchor: [30, 13] });
+}
+function stationIcon(name) {
+  return L.divIcon({ className: '', html: `<div class="st-pin">🚉 ${esc(name)}</div>`, iconSize: [120, 26], iconAnchor: [14, 13] });
+}
+
+let mainMap = null, mainLayer = null;
+function renderMap(items) {
+  if (!mainMap) {
+    mainMap = L.map('mainMap');
+    addTiles(mainMap);
+    mainLayer = L.layerGroup().addTo(mainMap);
+    mainMap.on('popupopen', e => {
+      const b = e.popup.getElement().querySelector('[data-open]');
+      if (b) b.onclick = () => openDetail(b.dataset.open);
+    });
+  }
+  mainLayer.clearLayers();
+  const pts = [];
+  if (S.base) {
+    L.marker([S.base.lat, S.base.lng], { icon: meIcon(), zIndexOffset: 1000 }).addTo(mainLayer);
+    pts.push([S.base.lat, S.base.lng]);
+    if (DIST[S.dist]) {
+      L.circle([S.base.lat, S.base.lng], { radius: DIST[S.dist].max, color: '#2F6BE0', weight: 2, dashArray: '6 6', fillOpacity: 0.06 }).addTo(mainLayer);
+    }
+    if (S.dist === 'station') {
+      S.stations.forEach(st => { L.marker([st.lat, st.lng], { icon: stationIcon(st.name) }).addTo(mainLayer); pts.push([st.lat, st.lng]); });
+    }
+  }
+  const isEvents = S.tab === 'events';
+  items.filter(hasLoc).forEach(it => {
+    const c = isEvents ? (EVENT_CATS[it.category] || EVENT_CATS.marche) : (POST_CATS[it.category] || POST_CATS.barter);
+    const id = isEvents ? it.eventId : it.postId;
+    if (!isEvents) L.circle([it.lat, it.lng], { radius: 100, color: c.color, weight: 1, fillOpacity: 0.12 }).addTo(mainLayer);
+    L.marker([it.lat, it.lng], { icon: pinIcon(c.icon, c.color, !isEvents) })
+      .bindPopup(`<div><b style="font-size:17px">${esc(it.title)}</b><br>
+        ${isEvents ? `🕙 ${esc(fmtDate(it.datetime))}<br>📍 ${esc(it.place)}<br>` : `🙂 ${esc(it.owner.nickname)} さん<br>`}
+        ${distBadge(it)}<br>
+        <button class="btn btn-sub !min-h-[44px] mt-2" data-open="${esc(id)}">詳しく見る</button></div>`)
+      .addTo(mainLayer);
+    pts.push([it.lat, it.lng]);
+  });
+  setTimeout(() => {
+    mainMap.invalidateSize();
+    if (DIST[S.dist] && S.base) mainMap.fitBounds(L.latLng(S.base.lat, S.base.lng).toBounds(DIST[S.dist].max * 2.2));
+    else if (pts.length > 1) mainMap.fitBounds(pts, { padding: [40, 40], maxZoom: 16 });
+    else if (pts.length === 1) mainMap.setView(pts[0], 15);
+    else mainMap.setView(DEFAULT_CENTER, 10);
+  }, 60);
+}
 
 function renderChips() {
   const cats = S.tab === 'events' ? EVENT_CATS : POST_CATS;
@@ -548,32 +849,78 @@ function renderChips() {
     .concat(Object.entries(cats).map(([k, c]) => `<button class="chip" data-cat="${k}" aria-pressed="${S.cat === k}">${c.icon} ${c.label}</button>`))
     .join('');
   $$('[data-cat]').forEach(b => b.onclick = () => { S.cat = b.dataset.cat; render(); });
+
+  const dchips = [['all', '📏 距離で絞らない']]
+    .concat(Object.entries(DIST).map(([k, d]) => [k, `${d.icon} ${d.name}（${d.sub}）`]))
+    .concat([['station', '🚉 最寄り駅3つ以内']]);
+  $('#distChips').innerHTML = dchips.map(([k, l]) => `<button class="chip" data-dist="${k}" aria-pressed="${S.dist === k}">${l}</button>`).join('');
+  $$('[data-dist]').forEach(b => b.onclick = () => {
+    if (b.dataset.dist !== 'all' && !S.base) { toast('先に「現在地を使う」か「地図で選ぶ」で基準の場所を決めてください', false); return; }
+    S.dist = b.dataset.dist; render();
+  });
+
+  const sorts = S.tab === 'events'
+    ? [['default', '開催日が近い順'], ['near', '場所が近い順']]
+    : [['default', '新しい順'], ['near', '場所が近い順']];
+  $('#sort').innerHTML = sorts.map(([k, l]) => `<option value="${k}" ${S.sort === k ? 'selected' : ''}>${l}</option>`).join('');
 }
 
 /* ===== 一覧描画 ===== */
 function filtered() {
   const q = $('#q').value.trim().toLowerCase();
-  const onlyArea = $('#myArea').checked && S.user;
   const items = S.tab === 'events' ? S.events : S.posts;
-  return items.filter(it => {
+  let noLoc = 0;
+  const out = items.filter(it => {
     if (S.cat !== 'all' && it.category !== S.cat) return false;
     if (S.onlyMine && !it.isOwner) return false;
-    if (onlyArea && it.area && !String(it.area).includes(S.user.area) && !String(S.user.area).includes(it.area)) return false;
     if (q) {
-      const hay = [it.title, it.detail, it.place, it.area, (it.organizer || it.owner || {}).nickname].join(' ').toLowerCase();
+      const hay = [it.title, it.detail, it.place, it.area, it.station && it.station.name, (it.organizer || it.owner || {}).nickname].join(' ').toLowerCase();
       if (!hay.includes(q)) return false;
+    }
+    if (S.dist !== 'all' && S.base) {
+      if (S.dist === 'station') {
+        if (!it.station) { noLoc++; return false; }
+        if (!inMyStations(it)) return false;
+      } else {
+        const d = distOf(it);
+        if (d == null) { noLoc++; return false; }
+        if (d > DIST[S.dist].max) return false;
+      }
     }
     return true;
   });
+  if (S.sort === 'near' && S.base) {
+    out.sort((a, b) => (distOf(a) ?? Infinity) - (distOf(b) ?? Infinity));
+  }
+  filtered.noLoc = noLoc;
+  return out;
 }
 
 function render() {
   renderChips();
   const items = filtered();
   const list = $('#list');
+  const note = $('#filterNote');
+  const notes = [];
+  if (S.dist !== 'all' && S.base) {
+    notes.push(S.dist === 'station'
+      ? `🚉 ${S.stations.map(st => st.name + '駅').join('・') || '（最寄り駅を調べています）'}が最寄りの${S.tab === 'events' ? '催し' : '投稿'}を表示しています。`
+      : `${DIST[S.dist].icon} 基準の場所から${DIST[S.dist].sub}（道のりの目安）の${S.tab === 'events' ? '催し' : '投稿'}を表示しています。`);
+    if (filtered.noLoc) notes.push(`場所が分からない ${filtered.noLoc} 件は除いています。`);
+  }
+  if (S.sort === 'near' && !S.base) notes.push('近い順に並べるには、基準の場所を決めてください。');
+  note.textContent = notes.join(' ');
+  note.classList.toggle('hidden', !notes.length);
+
+  const showMap = S.view === 'map';
+  list.classList.toggle('hidden', showMap);
+  $('#mapWrap').classList.toggle('hidden', !showMap);
+  if (showMap) { renderMap(items); return; }
+
   if (!items.length) {
     list.innerHTML = `<div class="sm:col-span-2 lg:col-span-3 card p-8 text-center">
-      <p class="font-hand text-[22px]">${S.tab === 'events' ? 'まだ催しの告知がありません' : 'まだ投稿がありません'}</p>
+      <p class="font-hand text-[22px]">${S.dist !== 'all' && S.base ? 'この範囲には見つかりませんでした' : S.tab === 'events' ? 'まだ催しの告知がありません' : 'まだ投稿がありません'}</p>
+      ${S.dist !== 'all' && S.base ? '<p class="mt-2">範囲を広げてみてください（例：「やや近場」）。</p>' : ''}
       <p class="mt-2">${S.tab === 'events' ? 'マルシェやお茶会など、最初の催しを告知してみませんか。' : '余った野菜や使わない道具、困りごとを載せてみましょう。'}</p>
       <button class="btn btn-main mt-4" onclick="openForm()">${S.tab === 'events' ? '＋ 催しを告知する' : '＋ 出品・お願いする'}</button>
     </div>`;
@@ -604,6 +951,8 @@ function eventCard(ev) {
       <div class="px-4 pb-4 -mt-2 space-y-1 text-[16px]">
         <p>🕙 ${esc(fmtDate(ev.datetime))}</p>
         <p>📍 ${esc(ev.place)}${ev.area ? `（${esc(ev.area)}）` : ''}</p>
+        ${ev.station ? `<p class="text-[15px]">🚉 ${esc(ev.station.name)}駅から約${fmtKm(ev.station.distance)}</p>` : ''}
+        ${distBadge(ev) ? `<p class="pt-1">${distBadge(ev)}</p>` : ''}
         <p class="flex gap-4 pt-1 font-bold"><span>🙋 参加予定 ${ev.joinCount}人</span><span>👍 ${ev.likeCount}</span>${slotsLeft ? `<span class="text-terra">🧺 募集あり</span>` : ''}</p>
       </div>
     </button>
@@ -620,7 +969,8 @@ function postCard(p) {
         <div class="flex items-center gap-2 flex-wrap"><span class="tag">${c.icon} ${c.label}</span><span class="px-3 rounded-full text-[15px] font-bold ${st.cls}">${st.label}</span></div>
         <h3 class="font-hand text-[22px] leading-snug">${esc(p.title)}</h3>
         <p class="clamp3 text-[16px]">${esc(p.detail)}</p>
-        <p class="text-[15px]">🙂 ${esc(p.owner.nickname)} ${p.area ? `／📍${esc(p.area)}` : ''}${p.requestCount ? `／🙋 ${p.requestCount}件の申込` : ''}</p>
+        ${distBadge(p) ? `<p>${distBadge(p)}</p>` : ''}
+        <p class="text-[15px]">🙂 ${esc(p.owner.nickname)} ${p.area ? `／📍${esc(p.area)}` : ''}${p.station ? `／🚉${esc(p.station.name)}駅` : ''}${p.requestCount ? `／🙋 ${p.requestCount}件の申込` : ''}</p>
       </div>
     </button>
   </article>`;
@@ -674,7 +1024,48 @@ function openDetail(id) {
   body.innerHTML = ev ? eventDetail(ev) : postDetail(p);
   bindDetail(ev, p);
   if (!$('#dlgDetail').open) $('#dlgDetail').showModal();
+  drawMiniMap(ev || p, !!ev);
 }
+
+function locationSection(it, isEvent) {
+  if (!hasLoc(it)) return '';
+  const d = distOf(it);
+  const dest = `${it.lat},${it.lng}`;
+  const origin = S.base ? `&origin=${S.base.lat},${S.base.lng}` : '';
+  return `<section class="space-y-2" aria-label="場所">
+    <h4 class="font-hand text-[20px]">🗺 ${isEvent ? '会場' : '受け渡しの目安'}の場所</h4>
+    <div class="flex flex-wrap gap-2">${distBadge(it)}
+      ${it.station ? `<span class="dist-badge lv-far">🚉 ${esc(it.station.name)}駅から約${fmtKm(it.station.distance)}${inMyStations(it) ? '（あなたの最寄り駅）' : ''}</span>` : ''}</div>
+    <div id="miniMap" class="mini-map"></div>
+    ${!isEvent ? '<p class="text-[14px]">地図上の場所は約100mぼかした目安です。くわしい場所は投稿者と連絡して決めてください。</p>' : ''}
+    <div class="flex gap-2 flex-wrap">
+      <a class="btn btn-sub !min-h-[48px]" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1${origin}&destination=${dest}&travelmode=walking">🚶 歩いて行く道順</a>
+      <a class="btn btn-sub !min-h-[48px]" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1${origin}&destination=${dest}&travelmode=driving">🚗 車の道順</a>
+    </div>
+  </section>`;
+}
+let miniMap = null;
+function drawMiniMap(it, isEvent) {
+  if (miniMap) { miniMap.remove(); miniMap = null; }
+  if (!hasLoc(it) || !$('#miniMap')) return;
+  miniMap = L.map('miniMap', { scrollWheelZoom: false });
+  addTiles(miniMap);
+  const c = isEvent ? (EVENT_CATS[it.category] || EVENT_CATS.marche) : (POST_CATS[it.category] || POST_CATS.barter);
+  if (!isEvent) L.circle([it.lat, it.lng], { radius: 100, color: c.color, weight: 1, fillOpacity: 0.15 }).addTo(miniMap);
+  L.marker([it.lat, it.lng], { icon: pinIcon(c.icon, c.color, !isEvent) }).addTo(miniMap);
+  const pts = [[it.lat, it.lng]];
+  if (S.base) {
+    L.marker([S.base.lat, S.base.lng], { icon: meIcon() }).addTo(miniMap);
+    L.polyline([[S.base.lat, S.base.lng], [it.lat, it.lng]], { color: '#2F6BE0', weight: 3, dashArray: '4 8' }).addTo(miniMap);
+    pts.push([S.base.lat, S.base.lng]);
+  }
+  setTimeout(() => {
+    miniMap.invalidateSize();
+    if (pts.length > 1) miniMap.fitBounds(pts, { padding: [36, 36], maxZoom: 16 });
+    else miniMap.setView(pts[0], 16);
+  }, 80);
+}
+$('#dlgDetail').addEventListener('close', () => { if (miniMap) { miniMap.remove(); miniMap = null; } });
 
 function detailHeader(imageUrl, cat) {
   return `<div class="relative">
@@ -708,6 +1099,8 @@ function eventDetail(ev) {
     </dl>
     <div class="leading-8">${nl2br(ev.detail)}</div>
 
+    ${locationSection(ev, true)}
+
     <div class="grid grid-cols-2 gap-3">
       <button id="btnLike" class="btn ${ev.liked ? 'btn-main' : 'btn-sub'} !min-h-[64px] text-[18px]" aria-pressed="${ev.liked}">👍 楽しそう！<span class="count-pop" id="likeCnt">${ev.likeCount}</span></button>
       <button id="btnJoin" class="btn ${ev.joined ? 'btn-leaf' : 'btn-sub'} !min-h-[64px] text-[18px]" aria-pressed="${ev.joined}">🙋 ${ev.joined ? '参加します（済）' : '参加します！'}<span class="count-pop" id="joinCnt">${ev.joinCount}</span></button>
@@ -737,6 +1130,9 @@ function postDetail(p) {
       <p class="text-[15px]">🙂 ${esc(p.owner.nickname)} さん ${p.area ? `／📍${esc(p.area)}` : ''}／${esc(fmtDate(p.createdAt))} 投稿</p>
     </div>
     <div class="leading-8">${nl2br(p.detail)}</div>
+    ${p.place ? `<p>📍 受け渡しの目安：<b>${esc(p.place)}</b></p>` : ''}
+
+    ${locationSection(p, false)}
 
     ${!p.isOwner && p.status !== 'done' ? `<section class="space-y-2">
       ${p.requested ? '' : `<label class="label" for="reqNote">ひとこと（任意）</label><textarea id="reqNote" class="field !min-h-[80px]" maxlength="300" placeholder="例：土曜の午前に取りに行けます"></textarea>`}
@@ -904,8 +1300,14 @@ function openForm(item) {
     ${isEvent ? `
       <div class="grid sm:grid-cols-2 gap-4">
         <div><label class="label" for="fDate">日時</label><input id="fDate" class="field" type="datetime-local" value="${esc(it.datetime ? toLocalInput(it.datetime) : '')}"></div>
-        <div><label class="label" for="fPlace">開催場所</label><input id="fPlace" class="field" maxlength="100" value="${esc(it.place || '')}" placeholder="例：みどり町公民館 前庭"></div>
-      </div>` : ''}
+        <div><label class="label" for="fPlace">開催場所</label><input id="fPlace" class="field" maxlength="100" value="${esc(it.place || '')}" placeholder="例：中原区役所 前広場"></div>
+      </div>` : `
+      <div><label class="label" for="fPlace">受け渡しの目安の場所（任意）</label><input id="fPlace" class="field" maxlength="100" value="${esc(it.place || '')}" placeholder="例：小杉町公民館の前">
+        <p class="text-[14px] mt-1">空欄なら登録した地域が目安になります。地図には約100mぼかして表示します。</p></div>`}
+    <div class="flex items-center gap-3 flex-wrap">
+      <button type="button" id="fLocBtn" class="btn btn-sub">🗺 地図で場所を確かめる</button>
+      <span id="fLocState" class="text-[15px]"></span>
+    </div>
     <div><label class="label" for="fArea">地域</label><input id="fArea" class="field" maxlength="50" value="${esc(it.area || S.user.area)}"></div>
     <div><label class="label" for="fDetail">${isEvent ? '案内文' : 'くわしく'}</label>
       <textarea id="fDetail" class="field" maxlength="3000" placeholder="${isEvent ? '内容・持ち物・雨天の場合など' : '量・受け渡し場所・時間帯など'}">${esc(it.detail || '')}</textarea>
@@ -930,6 +1332,27 @@ function openForm(item) {
     ${contactFields(it.contacts || {})}
     <button class="btn btn-main w-full !min-h-[60px] text-[19px]">${editing ? '保存する' : isEvent ? '告知する' : '投稿する'}</button>
   `;
+
+  // 場所
+  const setLocState = () => {
+    $('#fLocState').textContent = f.dataset.lat
+      ? '✅ 地図で場所を決めました'
+      : (editing && hasLoc(it) ? '📍 登録済みの場所を使います' : '保存するときに住所から自動で探します');
+  };
+  f.dataset.lat = ''; f.dataset.lng = '';
+  setLocState();
+  $('#fPlace').addEventListener('input', () => { f.dataset.lat = ''; f.dataset.lng = ''; setLocState(); });
+  $('#fLocBtn').onclick = () => {
+    const area = $('#fArea').value.trim();
+    const place = $('#fPlace').value.trim();
+    const picked = f.dataset.lat ? { lat: Number(f.dataset.lat), lng: Number(f.dataset.lng) } : null;
+    openPicker({
+      title: isEvent ? '会場の場所を決める' : '受け渡しの目安を決める',
+      start: picked || (place ? null : (hasLoc(it) ? it : (hasLoc(S.user) ? S.user : S.base))),
+      query: [area, place].filter(Boolean).join(' '),
+      onPick(pt) { f.dataset.lat = pt.lat; f.dataset.lng = pt.lng; setLocState(); }
+    });
+  };
 
   // 画像
   $('#fImg').onchange = async e => {
@@ -993,10 +1416,11 @@ function collectForm() {
       facebook: $('#cFb').value.trim(), email: $('#cEmail').value.trim(), phone: $('#cPhone').value.trim()
     }
   };
+  data.place = $('#fPlace').value.trim();
+  if (f.dataset.lat) { data.lat = Number(f.dataset.lat); data.lng = Number(f.dataset.lng); }
   if (isEvent) {
     const v = $('#fDate').value;
     data.datetime = v ? new Date(v).toISOString() : '';   // 端末の時刻（日本時間）として送る
-    data.place = $('#fPlace').value.trim();
     data.slots = $$('[data-slotrow]', f).map(r => {
       const [l, n] = $$('input', r);
       return { id: r.dataset.id || undefined, label: l.value.trim(), capacity: Number(n.value) || 1 };
@@ -1075,11 +1499,14 @@ async function submitForm(e) {
 /* ===== 起動 ===== */
 (async function init() {
   renderUser();
+  renderBaseBar();
+  if (S.base) setBase(S.base, false);
   if (S.token) {
     try {
       const r = await api('me');
       saveSession(S.token, r.user);
       renderUser();
+      useProfileBaseIfNone();
       if (r.user.isTemp) openPwDialog(true);
     } catch { /* 期限切れは api() 内で処理 */ }
   }

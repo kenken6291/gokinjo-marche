@@ -19,6 +19,7 @@ GitHub Pages（index.html + config.js） + GAS（Code.gs） + スプレッドシ
 | createdAt | 登録日時 |
 | failCount | ログイン連続失敗回数（5回で15分ロック） |
 | lockedUntil | ロック解除時刻 |
+| lat / lng | 地域の位置（約100m単位に丸め、本人以外には返さない） |
 
 ### Posts（おすそ分け・物々交換・助け合い）
 | 列 | 内容 |
@@ -32,6 +33,9 @@ GitHub Pages（index.html + config.js） + GAS（Code.gs） + スプレッドシ
 | area | 地域 |
 | contacts | 連絡先JSON `{zoom, meet, line, facebook, email, phone}`（会員のみに返却） |
 | createdAt | 投稿日時 |
+| place | 受け渡しの目安の場所（任意） |
+| lat / lng | 受け渡し目安の位置（約100mぼかし） |
+| station | 最寄り駅JSON `{name, distance, lines}` |
 
 ### Events（広場のイベント）
 | 列 | 内容 |
@@ -44,6 +48,7 @@ GitHub Pages（index.html + config.js） + GAS（Code.gs） + スプレッドシ
 | slots | 持ち寄り・出店枠JSON `[{id, label, capacity, members:[userId]}]` |
 | contacts | 外部通話・連絡先JSON（Postsと同じ形） |
 | area / createdAt | 地域 / 作成日時 |
+| lat / lng / station | 会場の位置 / 最寄り駅JSON |
 
 ### Matches（参加・リアクション・申込）
 | 列 | 内容 |
@@ -65,6 +70,7 @@ GitHub Pages（index.html + config.js） + GAS（Code.gs） + スプレッドシ
    - タイムゾーン：**(GMT+09:00) 東京**
    - スクリプトプロパティ：`GEMINI_API_KEY`（必須）、`GEMINI_MODEL`（任意。未設定なら `gemini-3.8-flash`）
 3. `setup()` を実行して権限を承認（シート・Driveフォルダ・PEPPERが作られます）
+   - 位置情報の列を追加したときも `setup()` を再実行（見出し行だけ更新、データはそのまま）→ `backfillLocations()` を1回実行
 4. デプロイ › 新しいデプロイ › ウェブアプリ（実行：自分／アクセス：全員）
 5. 発行URLを `config.js` の `GAS_URL` に貼り付け → `index.html` と `config.js` をリポジトリ `gokinjo-marche` に push → Pages を有効化
 
@@ -83,8 +89,14 @@ GitHub Pages（index.html + config.js） + GAS（Code.gs） + スプレッドシ
 | eventMembers | 必要 | 参加者一覧（主催者・参加者のみ） |
 | createPost / updatePost / deletePost / requestPost | 必要 | おすそ分け（申込は投稿者へメール通知） |
 | aiWrite | 必要 | Geminiで見出し・タイトル・告知文を生成 |
+| geocode | 必要 | 住所・場所名 → 緯度経度（Apps Script標準のMapsサービス） |
+| stations | 不要 | 最寄り駅3つ（HeartRails Express API） |
 
 ## メモ
+
+- 近さの目安：直線距離×1.3を道のりとし、徒歩80m/分・自転車250m/分・車400m/分で計算。すぐ近く＝徒歩10分、近場＝自転車10分、やや近場＝車10分。
+- 「最寄り駅3つ以内」：基準の場所の最寄り駅3つのどれかが、催し・投稿の最寄り駅と一致するものを表示。
+- 地図は Leaflet + OpenStreetMap（無料・APIキー不要）。
 
 - Google Meet はAPIで会議を自動発行できない（OAuthが必要）ため、「新しく作る」で `meet.google.com/new` を開き、表示されたリンクを貼り付ける方式です。
 - Gmail の送信上限は無料アカウントで1日100通前後です。
